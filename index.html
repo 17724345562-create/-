@@ -1,0 +1,2058 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e1f" />
+<title>NOVA · 智能财务管家</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg-0: #0a0e1f; --bg-1: #0f1428; --bg-2: #151b33; --bg-3: #1c2440;
+  --line: rgba(255,255,255,.12); --line-2: rgba(255,255,255,.08); --line-3: rgba(0,229,255,.4);
+  --neon: #00e5ff; --neon-2: #4d9fff; --violet: #b18cff; --teal: #4affd4;
+  --gold: #ffc94d; --pink: #ff7eb6; --red: #ff5c7c;
+  --t1: #ffffff; --t2: #c8d4f0; --t3: #8b98bd; --t4: #5c688c;
+  --blur: blur(20px); --shadow-lg: 0 30px 80px rgba(0,0,0,.55); --shadow-neon: 0 0 50px rgba(0,229,255,.25);
+  --r-sm: 12px; --r-md: 16px; --r-lg: 22px; --r-xl: 28px;
+  --ease: cubic-bezier(.2,.9,.25,1); --ease-out: cubic-bezier(.16,1,.3,1);
+}
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: "SF Pro Display", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  background: var(--bg-0); color: var(--t1); min-height: 100vh; overflow-x: hidden;
+  -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 1;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -2;
+  background:
+    radial-gradient(1100px 800px at 15% 5%, rgba(0,229,255,.22), transparent 60%),
+    radial-gradient(1000px 800px at 90% 95%, rgba(177,140,255,.20), transparent 60%),
+    radial-gradient(800px 600px at 75% 15%, rgba(77,159,255,.14), transparent 60%),
+    var(--bg-0);
+}
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image: linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(ellipse 95% 80% at 50% 40%, #000 35%, transparent 88%);
+          mask-image: radial-gradient(ellipse 95% 80% at 50% 40%, #000 35%, transparent 88%);
+}
+.bot { width: 100%; height: 100%; display: block; overflow: visible; }
+.bot-eye { transform-origin: center; animation: botBlink 4.2s infinite; }
+.bot-eye-r { animation-delay: .04s; }
+.bot-eye-core { animation: botEyeGlow 2.4s ease-in-out infinite; }
+@keyframes botBlink { 0%, 92%, 100% { transform: scaleY(1); } 94%, 96% { transform: scaleY(.1); } }
+@keyframes botEyeGlow { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.bot-antenna-ball { animation: botAntenna 1.8s ease-in-out infinite; }
+@keyframes botAntenna { 0%, 100% { opacity: 1; r: 4.5; } 50% { opacity: .35; r: 3.2; } }
+.bot-ring { transform-origin: 60px 60px; animation: botRingSpin 8s linear infinite; opacity: .6; }
+.bot-ring-2 { animation-duration: 14s; animation-direction: reverse; }
+@keyframes botRingSpin { to { transform: rotate(360deg); } }
+.bot-float { animation: botFloat 4.5s ease-in-out infinite; }
+@keyframes botFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.bot-mouth { animation: botMouth 3.6s ease-in-out infinite; }
+@keyframes botMouth { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.72); } }
+.bot.focus .bot-eye { animation: none; transform: scaleY(.35); }
+.bot.focus .bot-eye-core { opacity: 1; }
+.bot.focus .bot-ring { opacity: .95; animation-duration: 3s; }
+#loginScreen {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  align-items: center; justify-content: center;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  overflow-y: auto; background: var(--bg-0);
+}
+#loginScreen.show { display: flex; }
+.scanline {
+  position: fixed; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,229,255,.8), transparent);
+  animation: scan 4.5s linear infinite; pointer-events: none; z-index: 1; opacity: .7;
+}
+@keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+.particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.particle { position: absolute; width: 3px; height: 3px; border-radius: 50%; opacity: 0; animation: particleFly linear infinite; }
+@keyframes particleFly { 0% { opacity: 0; transform: translateY(100vh) scale(.5); } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; transform: translateY(-20vh) scale(1.2); } }
+.login-wrap { position: relative; z-index: 2; width: 100%; max-width: 420px; animation: fadeUp .8s var(--ease) both; }
+.bot-stage { position: relative; width: 140px; height: 140px; margin: 0 auto 24px; animation: botFloat 4.5s ease-in-out infinite; }
+.bot-halo { position: absolute; inset: -24px; border-radius: 50%; background: radial-gradient(circle, rgba(0,229,255,.35), transparent 65%); animation: haloPulse 3s ease-in-out infinite; pointer-events: none; }
+@keyframes haloPulse { 0%, 100% { transform: scale(1); opacity: .8; } 50% { transform: scale(1.2); opacity: .4; } }
+.brand { text-align: center; margin-bottom: 28px; }
+.brand-title { font-size: 44px; font-weight: 900; letter-spacing: .16em; line-height: 1; background: linear-gradient(135deg, #fff 0%, var(--neon) 50%, var(--violet) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 24px rgba(0,229,255,.5)); margin-bottom: 12px; }
+.brand-sub { font-size: 11px; letter-spacing: .42em; color: var(--t3); text-transform: uppercase; }
+.brand-ver { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--line-3); background: rgba(0,229,255,.08); color: var(--neon); font-size: 10px; letter-spacing: .16em; }
+.brand-ver .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--neon); box-shadow: 0 0 12px var(--neon); animation: dotPulse 1.6s ease-in-out infinite; }
+@keyframes dotPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .3; transform: scale(.7); } }
+.login-card { position: relative; padding: 28px 26px; border-radius: var(--r-xl); border: 1px solid var(--line); background: linear-gradient(165deg, rgba(255,255,255,.09), rgba(255,255,255,.025)); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,.1); overflow: hidden; }
+.login-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--neon), var(--violet), transparent); opacity: .8; }
+.mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: var(--r-md); border: 1px solid var(--line); background: rgba(0,0,0,.4); margin-bottom: 22px; }
+.mode-tab { padding: 12px 0; border: none; border-radius: var(--r-sm); background: transparent; color: var(--t3); font-size: 13px; font-weight: 800; font-family: inherit; cursor: pointer; transition: all .3s var(--ease); -webkit-tap-highlight-color: transparent; letter-spacing: .12em; }
+.mode-tab.active { background: linear-gradient(135deg, rgba(0,229,255,.3), rgba(177,140,255,.25)); color: #fff; box-shadow: 0 6px 22px rgba(0,229,255,.35), inset 0 1px 0 rgba(255,255,255,.2); }
+.field { position: relative; margin-bottom: 18px; }
+.field label { display: flex; align-items: center; gap: 7px; font-size: 11px; letter-spacing: .2em; color: var(--t3); margin-bottom: 9px; text-transform: uppercase; font-weight: 700; }
+.field label::before { content: "▸"; color: var(--neon); font-size: 11px; filter: drop-shadow(0 0 6px var(--neon)); }
+.field input { width: 100%; padding: 15px 44px 15px 16px; border-radius: var(--r-md); border: 1px solid var(--line); background: rgba(0,0,0,.45); color: var(--t1); font-family: inherit; font-size: 15px; outline: none; transition: all .25s var(--ease); color-scheme: dark; letter-spacing: .02em; }
+.field input::placeholder { color: var(--t4); }
+.field input:focus { border-color: rgba(0,229,255,.7); background: rgba(0,229,255,.06); box-shadow: 0 0 0 4px rgba(0,229,255,.12), 0 0 30px rgba(0,229,255,.2); }
+.field .icon-btn { position: absolute; right: 10px; bottom: 10px; width: 34px; height: 34px; border-radius: 10px; border: none; background: transparent; color: var(--t3); font-size: 16px; line-height: 1; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.field .icon-btn:hover { background: rgba(0,229,255,.15); color: var(--neon); }
+.invite-field { display: none; animation: fadeUp .35s var(--ease) both; }
+.invite-field.show { display: block; }
+.invite-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 99px; background: rgba(255,201,77,.15); border: 1px solid rgba(255,201,77,.4); color: var(--gold); font-size: 9px; letter-spacing: .1em; margin-left: 6px; text-transform: none; font-weight: 700; }
+.pwd-strength { display: none; margin-top: 9px; }
+.pwd-strength.show { display: block; }
+.pwd-bars { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; margin-bottom: 7px; }
+.pwd-bars span { height: 4px; border-radius: 99px; background: rgba(255,255,255,.1); transition: all .3s; }
+.pwd-strength[data-level="1"] .pwd-bars span:nth-child(1) { background: var(--red); box-shadow: 0 0 10px var(--red); }
+.pwd-strength[data-level="2"] .pwd-bars span:nth-child(-n+2) { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+.pwd-strength[data-level="3"] .pwd-bars span:nth-child(-n+3) { background: var(--neon-2); box-shadow: 0 0 10px var(--neon-2); }
+.pwd-strength[data-level="4"] .pwd-bars span { background: var(--teal); box-shadow: 0 0 10px var(--teal); }
+.pwd-text { font-size: 11px; color: var(--t3); letter-spacing: .06em; font-weight: 600; }
+.pwd-strength[data-level="1"] .pwd-text { color: var(--red); }
+.pwd-strength[data-level="2"] .pwd-text { color: var(--gold); }
+.pwd-strength[data-level="3"] .pwd-text { color: var(--neon-2); }
+.pwd-strength[data-level="4"] .pwd-text { color: var(--teal); }
+.caps-warn { display: none; margin-top: 7px; font-size: 11px; color: var(--gold); letter-spacing: .06em; font-weight: 600; }
+.caps-warn.show { display: block; }
+.login-btn { position: relative; width: 100%; margin-top: 12px; padding: 17px; border: none; border-radius: var(--r-md); background: linear-gradient(135deg, var(--neon) 0%, var(--neon-2) 50%, var(--violet) 100%); background-size: 200% 200%; color: #0a0e1f; font-family: inherit; font-size: 15px; font-weight: 900; letter-spacing: .24em; text-transform: uppercase; cursor: pointer; transition: all .4s var(--ease); box-shadow: 0 14px 40px rgba(0,229,255,.4), inset 0 1px 0 rgba(255,255,255,.4); overflow: hidden; -webkit-tap-highlight-color: transparent; animation: btnShine 4s ease-in-out infinite; }
+@keyframes btnShine { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+.login-btn::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); transform: translateX(-100%); transition: transform .7s; }
+.login-btn:hover::before { transform: translateX(100%); }
+.login-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 22px 55px rgba(0,229,255,.55), inset 0 1px 0 rgba(255,255,255,.4); }
+.login-btn:active:not(:disabled) { transform: translateY(0) scale(.98); }
+.login-btn:disabled { opacity: .6; cursor: not-allowed; }
+.login-msg { margin-top: 16px; padding: 12px 16px; border-radius: var(--r-sm); font-size: 13px; text-align: center; display: none; line-height: 1.6; letter-spacing: .02em; font-weight: 600; }
+.login-msg.error { display: block; background: rgba(255,92,124,.15); color: var(--red); border: 1px solid rgba(255,92,124,.4); }
+.login-msg.ok { display: block; background: rgba(0,229,255,.15); color: var(--neon); border: 1px solid rgba(0,229,255,.4); }
+.login-msg.warn { display: block; background: rgba(255,201,77,.15); color: var(--gold); border: 1px solid rgba(255,201,77,.4); }
+.login-foot { margin-top: 18px; text-align: center; font-size: 11px; color: var(--t4); letter-spacing: .08em; line-height: 2; }
+.login-foot .secure { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 99px; background: rgba(74,255,212,.1); border: 1px solid rgba(74,255,212,.3); color: var(--teal); margin-bottom: 10px; font-weight: 700; }
+#app { display: none; width: 100%; max-width: 920px; margin: 0 auto; padding: 24px 18px calc(24px + env(safe-area-inset-bottom)); }
+#app.show { display: block; }
+.page { display: none; }
+.page.active { display: block; animation: pageEnter .5s var(--ease-out) both; }
+@keyframes pageEnter { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.bar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; margin-bottom: 24px; padding: 14px 18px; border-radius: var(--r-lg); border: 1px solid var(--line); background: linear-gradient(135deg, rgba(0,229,255,.06), rgba(177,140,255,.04)); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); position: relative; overflow: hidden; }
+.bar::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--neon), var(--violet), transparent); opacity: .6; }
+.bar-title { font-size: 18px; font-weight: 900; letter-spacing: .06em; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.bar-title .mark { font-size: 18px; filter: drop-shadow(0 0 10px var(--neon)); animation: markPulse 2.5s ease-in-out infinite; }
+@keyframes markPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: .75; } }
+.bar-title span { font-size: 11px; font-weight: 400; letter-spacing: .22em; color: var(--t3); }
+.bar-right { display: flex; align-items: center; gap: 10px; justify-self: end; }
+.user-chip { display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--line-3); background: rgba(0,229,255,.08); color: var(--neon); font-size: 12px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: .04em; font-weight: 700; }
+.user-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 12px var(--teal); flex: none; animation: dotPulse 2s ease-in-out infinite; }
+.avatar-btn { position: relative; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line-3); background: linear-gradient(135deg, rgba(0,229,255,.2), rgba(177,140,255,.15)); cursor: pointer; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: all .3s var(--ease); -webkit-tap-highlight-color: transparent; flex: none; }
+.avatar-btn:hover { transform: scale(1.08); box-shadow: 0 0 24px rgba(0,229,255,.5); border-color: var(--neon); }
+.avatar-btn:active { transform: scale(.95); }
+.avatar-btn svg { width: 24px; height: 24px; }
+.avatar-btn .ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--neon); border-right-color: var(--violet); animation: avatarSpin 3s linear infinite; }
+@keyframes avatarSpin { to { transform: rotate(360deg); } }
+.back { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: var(--r-md); border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--t2); font-size: 13px; font-family: inherit; cursor: pointer; transition: all .25s var(--ease); -webkit-tap-highlight-color: transparent; letter-spacing: .04em; font-weight: 700; }
+.back:hover { background: rgba(0,229,255,.12); color: var(--neon); border-color: var(--line-3); transform: translateX(-4px); }
+.back:active { transform: translateX(-4px) scale(.96); }
+.io-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; animation: fadeUp .5s var(--ease) both; }
+.io-btn { padding: 15px; border-radius: var(--r-md); font-size: 14px; font-weight: 800; font-family: inherit; cursor: pointer; letter-spacing: .1em; transition: all .25s var(--ease); -webkit-tap-highlight-color: transparent; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.io-btn.export { border: 1px solid rgba(0,229,255,.4); background: rgba(0,229,255,.1); color: var(--neon); }
+.io-btn.export:hover { background: rgba(0,229,255,.2); box-shadow: 0 0 24px rgba(0,229,255,.3); transform: translateY(-2px); }
+.io-btn.export:active { transform: translateY(0) scale(.97); }
+.io-btn.import { border: 1px solid rgba(177,140,255,.4); background: rgba(177,140,255,.1); color: var(--violet); }
+.io-btn.import:hover { background: rgba(177,140,255,.2); box-shadow: 0 0 24px rgba(177,140,255,.3); transform: translateY(-2px); }
+.io-btn.import:active { transform: translateY(0) scale(.97); }
+.balance-card { position: relative; padding: 28px 26px; border-radius: var(--r-xl); border: 1px solid var(--line-3); background: radial-gradient(120% 130% at 0% 0%, rgba(0,229,255,.22), transparent 62%), radial-gradient(100% 120% at 100% 100%, rgba(177,140,255,.20), transparent 62%), linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,.02)); margin-bottom: 24px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.4), var(--shadow-neon); cursor: pointer; transition: transform .3s var(--ease), box-shadow .3s, border-color .3s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; animation: fadeUp .5s var(--ease) both; }
+.balance-card:hover { transform: translateY(-4px); border-color: rgba(0,229,255,.7); box-shadow: 0 32px 80px rgba(0,229,255,.35), var(--shadow-neon); }
+.balance-card:active { transform: translateY(0) scale(.995); }
+.balance-card::before { content: ""; position: absolute; top: 0; left: -100%; right: 0; bottom: 0; background: linear-gradient(90deg, transparent, rgba(0,229,255,.15), transparent); animation: cardScan 4s ease-in-out infinite; pointer-events: none; }
+@keyframes cardScan { 0% { left: -100%; } 50%, 100% { left: 100%; } }
+.balance-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.balance-label { font-size: 11px; letter-spacing: .3em; color: var(--t2); text-transform: uppercase; font-weight: 700; }
+.balance-badge { margin-left: auto; font-size: 11px; padding: 5px 13px; border-radius: 99px; background: rgba(0,229,255,.15); color: var(--neon); border: 1px solid var(--line-3); letter-spacing: .1em; display: flex; align-items: center; gap: 6px; white-space: nowrap; max-width: 60%; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+.balance-badge .arrow { font-size: 9px; opacity: .9; }
+.balance-value { font-size: clamp(42px, 10vw, 60px); font-weight: 900; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; background: linear-gradient(180deg, #fff 0%, var(--neon) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 24px rgba(0,229,255,.5)); transition: all .3s; }
+.balance-value.negative { background: linear-gradient(180deg, #ffb3c9 0%, var(--red) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 24px rgba(255,92,124,.5)); }
+.balance-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.1); }
+.balance-meta-item { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: var(--r-md); border: 1px solid var(--line-2); background: rgba(0,0,0,.25); }
+.balance-meta-label { font-size: 10px; letter-spacing: .22em; color: var(--t3); text-transform: uppercase; font-weight: 700; }
+.balance-meta-val { font-size: 17px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.balance-meta-val.income { color: var(--teal); }
+.balance-meta-val.expense { color: var(--gold); }
+.year-section { animation: fadeUp .6s var(--ease) both; }
+.year-section-title { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; font-size: 11px; letter-spacing: .3em; color: var(--t3); text-transform: uppercase; font-weight: 700; }
+.year-section-title::before { content: "◈"; color: var(--neon); font-size: 12px; filter: drop-shadow(0 0 8px var(--neon)); }
+.year-section-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-3), transparent); }
+.year-nav { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; gap: 12px; margin-bottom: 16px; }
+.year-arrow { height: 62px; border-radius: var(--r-md); border: 1px solid var(--line); background: linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); color: var(--t2); font-size: 24px; line-height: 1; font-family: inherit; cursor: pointer; transition: all .25s var(--ease); -webkit-tap-highlight-color: transparent; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+.year-arrow:hover:not(:disabled) { background: linear-gradient(160deg, rgba(0,229,255,.2), rgba(177,140,255,.15)); color: var(--neon); border-color: var(--line-3); box-shadow: 0 0 24px rgba(0,229,255,.3); }
+.year-arrow:active:not(:disabled) { transform: scale(.94); }
+.year-arrow:disabled { opacity: .3; cursor: not-allowed; }
+.year-display { height: 62px; border-radius: var(--r-md); border: 1px solid var(--line-3); background: linear-gradient(160deg, rgba(0,229,255,.2), rgba(177,140,255,.15)); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 900; letter-spacing: .1em; font-variant-numeric: tabular-nums; color: #fff; box-shadow: 0 10px 30px rgba(0,229,255,.25), inset 0 1px 0 rgba(255,255,255,.15); text-shadow: 0 0 24px rgba(0,229,255,.6); position: relative; overflow: hidden; }
+.year-display::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent); animation: yearShine 3s ease-in-out infinite; }
+@keyframes yearShine { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(100%); } }
+.year-card { position: relative; display: block; width: 100%; aspect-ratio: 1.7 / 1; max-height: 320px; margin: 0 auto; padding: 0; border: 1px solid var(--line); border-radius: var(--r-xl); background: var(--bg-1); cursor: pointer; overflow: hidden; color: inherit; font-family: inherit; box-shadow: var(--shadow-lg); transition: transform .45s var(--ease), box-shadow .45s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.year-card::before { content: ""; position: absolute; inset: -60%; background: conic-gradient(from 0deg, transparent 0 50%, rgba(0,229,255,.95) 70%, rgba(177,140,255,.95) 85%, transparent 100%); animation: spin 6s linear infinite; pointer-events: none; }
+.year-card::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(0,229,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,.06) 1px, transparent 1px); background-size: 24px 24px; opacity: 0; transition: opacity .4s; pointer-events: none; }
+.year-card:hover::after { opacity: 1; }
+.year-card:hover { transform: translateY(-8px) scale(1.01); box-shadow: 0 46px 100px rgba(0,229,255,.35); }
+.year-card:active { transform: scale(.985); }
+.year-inner { position: absolute; inset: 3px; border-radius: calc(var(--r-xl) - 3px); background: radial-gradient(130% 130% at 50% 0%, #131b38 0%, var(--bg-1) 72%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; pointer-events: none; }
+.year-num { font-size: clamp(60px, 16vw, 100px); font-weight: 900; line-height: 1; letter-spacing: .08em; background: linear-gradient(180deg, #fff 0%, var(--neon) 55%, var(--violet) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 32px rgba(0,229,255,.55)); font-variant-numeric: tabular-nums; }
+.year-sub { font-size: 12px; letter-spacing: .32em; color: var(--t3); transition: color .35s; text-transform: uppercase; font-weight: 700; }
+.year-card:hover .year-sub { color: var(--neon); }
+.year-quick { display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden; padding: 8px 4px 12px; margin-top: 14px; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; touch-action: pan-x; scroll-snap-type: x proximity; overscroll-behavior-x: contain; cursor: grab; }
+.year-quick::-webkit-scrollbar { display: none; }
+.year-quick:active { cursor: grabbing; }
+.year-chip { flex: none; padding: 11px 22px; border-radius: 99px; border: 1px solid var(--line); background: rgba(255,255,255,.05); color: var(--t3); font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; font-family: inherit; cursor: pointer; transition: all .25s var(--ease); -webkit-tap-highlight-color: transparent; user-select: none; scroll-snap-align: center; letter-spacing: .1em; }
+.year-chip:hover { background: rgba(0,229,255,.1); color: var(--t2); border-color: var(--line-3); }
+.year-chip:active { transform: scale(.94); }
+.year-chip.active { background: linear-gradient(135deg, rgba(0,229,255,.3), rgba(177,140,255,.25)); border-color: var(--neon); color: #fff; box-shadow: 0 8px 24px rgba(0,229,255,.4), inset 0 1px 0 rgba(255,255,255,.2); }
+.months { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.month-card { --h: 195; position: relative; aspect-ratio: 1 / 1; border-radius: var(--r-lg); border: 1px solid hsl(var(--h) 85% 70% / .3); background: radial-gradient(125% 105% at 50% 0%, hsl(var(--h) 80% 35% / .5), transparent 68%), linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,.02)); color: inherit; font-family: inherit; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; transition: transform .35s var(--ease), box-shadow .35s, border-color .35s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.month-card::after { content: ""; position: absolute; inset: 0; background: radial-gradient(70% 55% at 50% 105%, hsl(var(--h) 95% 65% / .4), transparent 70%); opacity: 0; transition: opacity .35s; pointer-events: none; }
+.month-card:hover { transform: translateY(-8px); border-color: hsl(var(--h) 95% 75% / .8); box-shadow: 0 24px 50px hsl(var(--h) 80% 50% / .45); }
+.month-card:hover::after { opacity: 1; }
+.month-card:active { transform: translateY(-3px) scale(.97); }
+.m-num { position: relative; z-index: 1; font-size: clamp(24px, 5.5vw, 34px); font-weight: 900; line-height: 1; color: hsl(var(--h) 95% 82%); font-variant-numeric: tabular-nums; text-shadow: 0 0 20px hsl(var(--h) 95% 60% / .6); }
+.m-cn { position: relative; z-index: 1; font-size: 12px; letter-spacing: .12em; color: #d8e0f5; font-weight: 700; }
+.m-en { position: relative; z-index: 1; font-size: 9px; letter-spacing: .22em; color: var(--t4); text-transform: uppercase; font-weight: 700; }
+.days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 20px; }
+.grid-day { position: relative; height: 72px; padding: 0; border-radius: var(--r-md); border: 1px solid var(--line-2); background: linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); color: inherit; font-family: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; overflow: hidden; transition: transform .25s var(--ease), border-color .25s, box-shadow .25s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.grid-day:hover { transform: translateY(-4px); border-color: rgba(0,229,255,.6); box-shadow: 0 12px 28px rgba(0,229,255,.2); }
+.grid-day:active { transform: translateY(-2px) scale(.96); }
+.grid-day.active { border-color: var(--neon); background: linear-gradient(160deg, rgba(0,229,255,.25), rgba(177,140,255,.18)); box-shadow: 0 12px 30px rgba(0,229,255,.35), inset 0 0 24px rgba(0,229,255,.15); }
+.grid-day.active::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 100%, rgba(0,229,255,.35), transparent 60%); pointer-events: none; }
+.gd-num { font-size: 17px; font-weight: 900; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
+.gd-money { font-size: 10px; font-weight: 800; line-height: 1; color: var(--teal); font-variant-numeric: tabular-nums; max-width: calc(100% - 8px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gd-money.negative { color: var(--red); }
+.gd-dot { position: absolute; top: 6px; right: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--violet); box-shadow: 0 0 10px var(--violet); animation: dotPulse 2s ease-in-out infinite; }
+.summary-card { padding: 22px 24px; border-radius: var(--r-lg); border: 1px solid var(--line-3); background: linear-gradient(150deg, rgba(0,229,255,.08), rgba(177,140,255,.05)); cursor: pointer; transition: all .3s var(--ease); -webkit-tap-highlight-color: transparent; touch-action: manipulation; animation: fadeUp .4s var(--ease) both; position: relative; overflow: hidden; }
+.summary-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--neon), var(--violet), transparent); opacity: .8; }
+.summary-card:hover { border-color: var(--neon); transform: translateY(-3px); box-shadow: 0 20px 44px rgba(0,229,255,.25); }
+.summary-card:active { transform: translateY(0) scale(.995); }
+.summary-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.summary-date { display: flex; align-items: baseline; gap: 10px; }
+.summary-day-num { font-size: 34px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; background: linear-gradient(180deg, #fff, var(--neon) 65%, var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 18px rgba(0,229,255,.5)); }
+.summary-date-text { display: flex; flex-direction: column; gap: 4px; }
+.summary-date-line { font-size: 14px; color: var(--t1); font-weight: 700; letter-spacing: .02em; }
+.summary-sub { font-size: 11px; color: var(--t4); letter-spacing: .1em; font-weight: 600; }
+.summary-go { margin-left: auto; font-size: 12px; color: var(--neon); letter-spacing: .12em; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--line-3); background: rgba(0,229,255,.1); white-space: nowrap; font-weight: 700; }
+.summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.summary-item { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: var(--r-md); border: 1px solid var(--line-2); background: rgba(0,0,0,.3); }
+.summary-label { font-size: 10px; color: var(--t3); letter-spacing: .18em; text-transform: uppercase; font-weight: 700; }
+.summary-value { font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.summary-value.income { color: var(--teal); }
+.summary-value.expense { color: var(--gold); }
+.summary-value.balance { color: #fff; }
+.summary-value.balance.negative { color: var(--red); }
+.hint { margin-top: 18px; text-align: center; font-size: 11px; color: var(--t4); letter-spacing: .22em; text-transform: uppercase; font-weight: 600; }
+.panel-block { padding: 18px; border-radius: var(--r-lg); border: 1px solid var(--line-2); background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.015)); margin-bottom: 14px; }
+.panel-block:last-child { margin-bottom: 0; }
+.block-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.bh-title { font-size: 13px; font-weight: 800; letter-spacing: .12em; color: var(--t1); text-transform: uppercase; }
+.bh-badge { margin-left: auto; font-size: 11px; letter-spacing: .08em; padding: 4px 11px; border-radius: 99px; background: rgba(0,229,255,.15); color: var(--neon); border: 1px solid var(--line-3); font-variant-numeric: tabular-nums; font-weight: 700; }
+.bh-badge.warn { background: rgba(255,201,77,.15); color: var(--gold); border-color: rgba(255,201,77,.4); }
+.bh-badge.off { background: rgba(255,255,255,.05); color: var(--t4); border-color: var(--line); }
+.inp { width: 100%; padding: 12px 14px; border-radius: var(--r-sm); border: 1px solid var(--line); background: rgba(0,0,0,.35); color: var(--t1); font-family: inherit; font-size: 14px; outline: none; transition: border-color .25s, background .25s, box-shadow .25s; color-scheme: dark; min-width: 0; letter-spacing: .02em; }
+.inp::placeholder { color: var(--t4); }
+.inp:focus { border-color: rgba(0,229,255,.7); background: rgba(0,229,255,.05); box-shadow: 0 0 0 4px rgba(0,229,255,.1); }
+.mini-btn { margin-left: auto; padding: 6px 13px; border-radius: 9px; border: 1px solid rgba(177,140,255,.4); background: rgba(177,140,255,.12); color: var(--violet); font-size: 11px; font-family: inherit; cursor: pointer; transition: all .25s; -webkit-tap-highlight-color: transparent; letter-spacing: .08em; font-weight: 700; }
+.mini-btn:hover { background: rgba(177,140,255,.25); }
+.mini-btn:active { transform: scale(.95); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.seg button { padding: 14px 0; border-radius: var(--r-md); border: 1px solid var(--line); background: rgba(255,255,255,.04); color: var(--t3); font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .28s var(--ease); -webkit-tap-highlight-color: transparent; }
+.seg button:hover { background: rgba(255,255,255,.08); color: var(--t2); }
+.seg button.active { background: linear-gradient(135deg, rgba(0,229,255,.25), rgba(177,140,255,.2)); border-color: var(--neon); color: #fff; box-shadow: 0 8px 22px rgba(0,229,255,.3), inset 0 1px 0 rgba(255,255,255,.15); }
+.time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.time-row label { display: flex; flex-direction: column; gap: 8px; font-size: 11px; color: var(--t3); letter-spacing: .16em; text-transform: uppercase; font-weight: 700; }
+.time-row input[type="time"] { width: 100%; padding: 12px 14px; border-radius: var(--r-sm); border: 1px solid var(--line); background: rgba(0,0,0,.35); color: var(--t1); font-family: inherit; font-size: 15px; font-variant-numeric: tabular-nums; outline: none; color-scheme: dark; min-width: 0; }
+.time-row input[type="time"]:focus { border-color: rgba(0,229,255,.7); }
+.row-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: rgba(0,0,0,.25); margin-bottom: 10px; }
+.row-item:last-child { margin-bottom: 0; }
+.row-item input[type="time"] { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: rgba(0,0,0,.35); color: var(--t1); font-family: inherit; font-size: 14px; font-variant-numeric: tabular-nums; outline: none; color-scheme: dark; }
+.row-item .dash { color: var(--t3); font-size: 13px; flex: none; font-weight: 700; }
+.del-btn { flex: none; width: 34px; height: 34px; border-radius: 10px; border: 1px solid rgba(255,92,124,.4); background: rgba(255,92,124,.15); color: var(--red); font-size: 17px; line-height: 1; font-family: inherit; cursor: pointer; transition: all .2s; -webkit-tap-highlight-color: transparent; font-weight: 700; }
+.del-btn:hover { background: rgba(255,92,124,.3); }
+.del-btn:active { transform: scale(.92); }
+.empty-tip { padding: 16px; text-align: center; font-size: 12px; color: var(--t4); border-radius: var(--r-sm); border: 1px dashed var(--line); letter-spacing: .08em; }
+.pay-block { display: flex; align-items: center; gap: 14px; padding: 20px 22px; border-radius: var(--r-lg); border: 1px solid var(--line-3); background: radial-gradient(120% 130% at 0% 0%, rgba(0,229,255,.2), transparent 62%), linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); cursor: pointer; transition: all .3s var(--ease); -webkit-tap-highlight-color: transparent; }
+.pay-block:hover { border-color: var(--neon); transform: translateY(-3px); box-shadow: 0 18px 40px rgba(0,229,255,.25); }
+.pay-block:active { transform: translateY(0) scale(.99); }
+.pay-block.disabled { border-color: var(--line); background: rgba(255,255,255,.03); }
+.pay-left { display: flex; flex-direction: column; gap: 6px; }
+.pay-label { font-size: 11px; letter-spacing: .24em; color: var(--t3); text-transform: uppercase; font-weight: 700; }
+.pay-val { font-size: 32px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; background: linear-gradient(180deg, #fff, var(--neon)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 18px rgba(0,229,255,.5)); }
+.pay-block.disabled .pay-val { background: none; -webkit-text-fill-color: var(--t4); color: var(--t4); filter: none; }
+.pay-arrow { margin-left: auto; font-size: 12px; color: var(--neon); letter-spacing: .1em; font-weight: 700; }
+.pay-block.disabled .pay-arrow { color: var(--t4); }
+.meal-list { display: flex; flex-direction: column; gap: 12px; }
+.meal-card { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: var(--r-md); border: 1px solid var(--line-2); background: rgba(0,0,0,.25); transition: all .25s var(--ease); }
+.meal-card:hover { border-color: rgba(0,229,255,.3); background: rgba(0,229,255,.04); }
+.meal-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.meal-emoji { font-size: 22px; flex: none; line-height: 1; }
+.meal-name { font-size: 14px; color: var(--t1); letter-spacing: .08em; flex: none; font-weight: 700; }
+.meal-amount { margin-left: auto; display: flex; align-items: center; gap: 4px; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--line); background: rgba(0,0,0,.4); transition: border-color .2s, box-shadow .2s; }
+.meal-amount:focus-within { border-color: rgba(0,229,255,.6); box-shadow: 0 0 0 4px rgba(0,229,255,.1); }
+.meal-amount span { color: var(--neon); font-size: 13px; font-weight: 900; }
+.meal-amount input { width: 66px; border: none; outline: none; background: transparent; color: var(--t1); font-family: inherit; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; padding: 0; color-scheme: dark; -moz-appearance: textfield; }
+.meal-amount input::-webkit-outer-spin-button, .meal-amount input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.meal-amount input::placeholder { color: var(--t4); font-weight: 400; }
+.photo-box { position: relative; flex: none; width: 64px; height: 64px; border-radius: var(--r-md); border: 1px dashed rgba(0,229,255,.4); background: rgba(0,229,255,.06); cursor: pointer; overflow: hidden; display: flex; align-items: center; justify-content: center; transition: all .25s var(--ease); -webkit-tap-highlight-color: transparent; }
+.photo-box:hover { border-color: var(--neon); background: rgba(0,229,255,.15); box-shadow: 0 0 20px rgba(0,229,255,.3); }
+.photo-box:active { transform: scale(.96); }
+.photo-box.has-photo { border-style: solid; border-color: var(--line-3); background: var(--bg-1); }
+.photo-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-empty { display: flex; flex-direction: column; align-items: center; gap: 3px; pointer-events: none; }
+.photo-icon { font-size: 18px; line-height: 1; }
+.photo-text { font-size: 9px; color: var(--neon); letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+.photo-remove { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 50%; border: none; background: rgba(0,0,0,.85); color: #fff; font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: background .2s; font-weight: 700; }
+.photo-remove:hover { background: rgba(255,92,124,.95); }
+.extra-item { padding: 14px; border-radius: var(--r-md); border: 1px solid var(--line-2); background: rgba(0,0,0,.25); margin-bottom: 12px; }
+.extra-item:last-child { margin-bottom: 0; }
+.extra-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.extra-name { flex: 1.4; }
+.extra-amt { flex: 1; text-align: right; min-width: 0; }
+.extra-bottom { display: flex; align-items: center; gap: 12px; }
+.extra-bottom .photo-box { width: 56px; height: 56px; }
+.extra-hint { font-size: 11px; color: var(--t4); letter-spacing: .1em; font-weight: 600; }
+.modal { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(10,14,31,.88); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+.modal.open { opacity: 1; pointer-events: auto; }
+.modal-card { position: relative; width: min(440px, 100%); max-height: 88vh; border-radius: var(--r-xl); border: 1px solid var(--line-3); background: radial-gradient(120% 70% at 50% 0%, rgba(0,229,255,.18), transparent 70%), linear-gradient(165deg, var(--bg-3), var(--bg-1)); box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 60px rgba(0,229,255,.15); transform: translateY(20px) scale(.95); transition: transform .4s var(--ease); }
+.modal.open .modal-card { transform: none; }
+.modal-close { position: absolute; top: 15px; right: 15px; z-index: 5; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--t2); font-size: 18px; line-height: 1; cursor: pointer; transition: all .25s; font-weight: 700; }
+.modal-close:hover { background: rgba(255,92,124,.2); color: var(--red); border-color: rgba(255,92,124,.5); }
+.edit-card { display: flex; flex-direction: column; max-height: 92vh; padding: 0; overflow: hidden; }
+.edit-head { padding: 24px 28px 18px; border-bottom: 1px solid var(--line); flex: none; position: relative; }
+.edit-head::after { content: ""; position: absolute; bottom: -1px; left: 28px; right: 28px; height: 2px; background: linear-gradient(90deg, transparent, var(--neon), transparent); opacity: .7; }
+.edit-date { font-size: 24px; font-weight: 900; letter-spacing: .06em; line-height: 1.2; }
+.edit-week { margin-top: 6px; font-size: 12px; color: var(--t3); letter-spacing: .14em; font-weight: 600; }
+.edit-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 6px; margin: 18px 28px 0; border-radius: var(--r-md); border: 1px solid var(--line); background: rgba(0,0,0,.35); flex: none; }
+.edit-tabs .tab { padding: 13px 0; border: none; border-radius: var(--r-sm); background: transparent; color: var(--t3); font-size: 14px; font-weight: 800; font-family: inherit; cursor: pointer; transition: all .3s var(--ease); -webkit-tap-highlight-color: transparent; letter-spacing: .08em; }
+.edit-tabs .tab.active { background: linear-gradient(135deg, rgba(0,229,255,.28), rgba(177,140,255,.22)); color: #fff; box-shadow: 0 8px 22px rgba(0,229,255,.3), inset 0 1px 0 rgba(255,255,255,.15); }
+.edit-body { flex: 1; overflow-y: auto; padding: 18px 28px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.edit-body::-webkit-scrollbar { display: none; }
+.tab-panel[hidden] { display: none; }
+.edit-footer { display: grid; grid-template-columns: auto 1fr; gap: 12px; padding: 16px 28px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(10,14,31,.7); flex: none; }
+.btn-reset { padding: 16px 20px; border-radius: var(--r-md); border: 1px solid rgba(255,92,124,.4); background: rgba(255,92,124,.12); color: var(--red); font-size: 13px; font-weight: 800; letter-spacing: .12em; font-family: inherit; cursor: pointer; transition: all .25s; white-space: nowrap; -webkit-tap-highlight-color: transparent; text-transform: uppercase; }
+.btn-reset:hover { background: rgba(255,92,124,.25); }
+.btn-reset:active { transform: scale(.97); }
+.btn-save { padding: 16px; border-radius: var(--r-md); border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--t2); font-size: 15px; font-weight: 800; letter-spacing: .22em; font-family: inherit; cursor: pointer; transition: all .3s var(--ease); -webkit-tap-highlight-color: transparent; text-transform: uppercase; }
+.btn-save.dirty { background: linear-gradient(135deg, var(--neon), var(--neon-2), var(--violet)); background-size: 200% 200%; border-color: transparent; color: #0a0e1f; box-shadow: 0 14px 34px rgba(0,229,255,.4); animation: btnShine 3s ease-in-out infinite; }
+.btn-save.saved { background: rgba(74,255,212,.15); border-color: rgba(74,255,212,.5); color: var(--teal); }
+.btn-save:active { transform: scale(.985); }
+.range-card { padding: 28px 24px 24px; overflow-y: auto; scrollbar-width: none; }
+.range-card::-webkit-scrollbar { display: none; }
+.range-title { font-size: 16px; font-weight: 900; letter-spacing: .18em; margin-bottom: 20px; text-transform: uppercase; color: var(--t1); display: flex; align-items: center; gap: 10px; }
+.range-title::before { content: "◈"; color: var(--neon); filter: drop-shadow(0 0 8px var(--neon)); }
+.range-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 6px; border-radius: var(--r-md); border: 1px solid var(--line); background: rgba(0,0,0,.35); margin-bottom: 20px; }
+.range-tab { padding: 12px 0; border: none; border-radius: var(--r-sm); background: transparent; color: var(--t3); font-size: 13px; font-weight: 800; font-family: inherit; cursor: pointer; transition: all .3s var(--ease); -webkit-tap-highlight-color: transparent; letter-spacing: .08em; }
+.range-tab.active { background: linear-gradient(135deg, rgba(0,229,255,.28), rgba(177,140,255,.22)); color: #fff; box-shadow: 0 8px 22px rgba(0,229,255,.3); }
+.range-panel[hidden] { display: none; }
+.range-panel { animation: fadeUp .3s ease both; }
+.range-desc { padding: 16px; text-align: center; font-size: 13px; color: var(--t2); border-radius: var(--r-md); border: 1px dashed var(--line); line-height: 1.7; letter-spacing: .05em; }
+.year-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-height: 240px; overflow-y: auto; padding: 2px; scrollbar-width: none; }
+.year-picker::-webkit-scrollbar { width: 5px; }
+.year-picker::-webkit-scrollbar-thumb { background: rgba(0,229,255,.4); border-radius: 99px; }
+.year-pick-btn { padding: 14px 0; border-radius: var(--r-sm); border: 1px solid var(--line); background: rgba(0,0,0,.3); color: var(--t2); font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; font-family: inherit; cursor: pointer; transition: all .25s; -webkit-tap-highlight-color: transparent; }
+.year-pick-btn:hover { background: rgba(0,229,255,.1); border-color: var(--line-3); }
+.year-pick-btn.active { background: linear-gradient(135deg, rgba(0,229,255,.3), rgba(177,140,255,.25)); border-color: var(--neon); color: #fff; box-shadow: 0 8px 22px rgba(0,229,255,.3); }
+.custom-row { margin-bottom: 14px; }
+.custom-row:last-child { margin-bottom: 0; }
+.custom-row label { display: flex; flex-direction: column; gap: 8px; font-size: 11px; color: var(--t3); letter-spacing: .18em; text-transform: uppercase; font-weight: 700; }
+.custom-row input[type="month"] { width: 100%; padding: 14px; border-radius: var(--r-sm); border: 1px solid var(--line); background: rgba(0,0,0,.35); color: var(--t1); font-family: inherit; font-size: 15px; font-variant-numeric: tabular-nums; outline: none; color-scheme: dark; }
+.custom-row input[type="month"]:focus { border-color: rgba(0,229,255,.7); }
+.range-result { margin: 20px 0 18px; padding: 16px 20px; border-radius: var(--r-md); border: 1px solid var(--line-3); background: rgba(0,229,255,.1); display: flex; align-items: center; justify-content: space-between; }
+.range-result span { font-size: 11px; letter-spacing: .22em; color: var(--t3); text-transform: uppercase; font-weight: 700; }
+.range-result strong { font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--neon); filter: drop-shadow(0 0 12px rgba(0,229,255,.4)); }
+.range-result strong.negative { color: var(--red); filter: drop-shadow(0 0 12px rgba(255,92,124,.4)); }
+.wage-card { padding: 28px 24px 24px; overflow-y: auto; scrollbar-width: none; }
+.wage-card::-webkit-scrollbar { display: none; }
+.wage-title { font-size: 16px; font-weight: 900; letter-spacing: .18em; margin-bottom: 20px; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
+.wage-title::before { content: "◆"; color: var(--violet); filter: drop-shadow(0 0 8px var(--violet)); }
+.wage-field { margin-bottom: 14px; }
+.wage-field label { display: block; font-size: 11px; letter-spacing: .18em; color: var(--t3); margin-bottom: 8px; text-transform: uppercase; font-weight: 700; }
+.wage-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.wage-section { margin-top: 20px; }
+.wage-result { display: flex; align-items: center; justify-content: space-between; margin: 22px 0 18px; padding: 16px 20px; border-radius: var(--r-md); border: 1px solid var(--line-3); background: rgba(0,229,255,.1); }
+.wage-result span { font-size: 11px; letter-spacing: .22em; color: var(--t3); text-transform: uppercase; font-weight: 700; }
+.wage-result strong { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--neon); filter: drop-shadow(0 0 12px rgba(0,229,255,.4)); }
+.btn-primary { width: 100%; padding: 17px; border: none; border-radius: var(--r-md); background: linear-gradient(135deg, var(--neon), var(--neon-2), var(--violet)); background-size: 200% 200%; color: #0a0e1f; font-size: 15px; font-weight: 900; letter-spacing: .22em; font-family: inherit; cursor: pointer; transition: all .3s var(--ease); box-shadow: 0 14px 34px rgba(0,229,255,.4); text-transform: uppercase; animation: btnShine 4s ease-in-out infinite; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 20px 46px rgba(0,229,255,.5); }
+.btn-primary:active { transform: scale(.98); }
+.toast { position: fixed; left: 50%; bottom: 40px; transform: translate(-50%, 20px); z-index: 300; padding: 14px 28px; border-radius: 99px; border: 1px solid var(--line-3); background: rgba(10,14,31,.96); color: var(--neon); font-size: 13px; letter-spacing: .12em; opacity: 0; pointer-events: none; transition: all .35s var(--ease); backdrop-filter: blur(16px); max-width: 80vw; text-align: center; box-shadow: 0 16px 50px rgba(0,229,255,.3); font-weight: 700; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.error { border-color: rgba(255,92,124,.5); color: var(--red); box-shadow: 0 16px 50px rgba(255,92,124,.3); }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 680px) {
+  .months { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .bar-title span { display: none; }
+  .m-cn { font-size: 11px; }
+  .m-en { font-size: 8px; }
+  .days-grid { gap: 7px; }
+  .grid-day { height: 64px; border-radius: 11px; }
+  .gd-num { font-size: 15px; }
+  .gd-money { font-size: 9px; }
+  .summary-card { padding: 18px; }
+  .summary-day-num { font-size: 28px; }
+  .summary-value { font-size: 16px; }
+  .edit-head { padding: 22px 22px 16px; }
+  .edit-tabs { margin-left: 22px; margin-right: 22px; }
+  .edit-body { padding: 16px 22px; }
+  .edit-footer { padding: 14px 22px calc(14px + env(safe-area-inset-bottom)); }
+  .meal-amount input { width: 58px; }
+  .balance-card { padding: 24px 22px; }
+  .user-chip { max-width: 100px; }
+  .year-picker { grid-template-columns: repeat(3, 1fr); }
+  .brand-title { font-size: 38px; }
+  .bot-stage { width: 120px; height: 120px; }
+  .bar { padding: 12px 14px; gap: 10px; }
+}
+@media (max-width: 400px) {
+  .months { grid-template-columns: repeat(2, 1fr); }
+  .photo-box { width: 56px; height: 56px; }
+  .days-grid { gap: 6px; }
+  .grid-day { height: 60px; }
+  .gd-num { font-size: 14px; }
+  .gd-money { font-size: 8px; }
+  .summary-value { font-size: 15px; }
+  .year-nav { grid-template-columns: 48px 1fr 48px; }
+  .year-arrow { height: 56px; font-size: 22px; }
+  .year-display { height: 56px; font-size: 24px; }
+  .avatar-btn { width: 38px; height: 38px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="scanline"></div>
+  <div class="particles" id="particles"></div>
+  <div class="login-wrap">
+    <div class="bot-stage">
+      <div class="bot-halo"></div>
+      <svg class="bot" viewBox="0 0 120 120" id="botSvg" aria-label="NOVA 机器人">
+        <defs>
+          <linearGradient id="botBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e2a4d"/><stop offset="1" stop-color="#0f1428"/></linearGradient>
+          <linearGradient id="botFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#152040"/><stop offset="1" stop-color="#0a0e1f"/></linearGradient>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <circle class="bot-ring" cx="60" cy="60" r="52" fill="none" stroke="#00e5ff" stroke-width="1.2" stroke-dasharray="5 8" opacity=".6"/>
+        <circle class="bot-ring bot-ring-2" cx="60" cy="60" r="46" fill="none" stroke="#b18cff" stroke-width="1.2" stroke-dasharray="3 10" opacity=".5"/>
+        <line x1="60" y1="16" x2="60" y2="30" stroke="#00e5ff" stroke-width="1.8" opacity=".9"/>
+        <circle class="bot-antenna-ball" cx="60" cy="13" r="4.5" fill="#00e5ff" filter="url(#glow)"/>
+        <rect x="26" y="30" width="68" height="58" rx="16" fill="url(#botBody)" stroke="#00e5ff" stroke-opacity=".6" stroke-width="1.3"/>
+        <rect x="32" y="36" width="56" height="46" rx="12" fill="url(#botFace)" stroke="#00e5ff" stroke-opacity=".3" stroke-width="1"/>
+        <g class="bot-eye"><circle cx="45" cy="57" r="6.5" fill="#0a0e1f" stroke="#00e5ff" stroke-opacity=".5"/><circle class="bot-eye-core" cx="45" cy="57" r="3.5" fill="#00e5ff" filter="url(#glow)"/></g>
+        <g class="bot-eye bot-eye-r"><circle cx="75" cy="57" r="6.5" fill="#0a0e1f" stroke="#00e5ff" stroke-opacity=".5"/><circle class="bot-eye-core" cx="75" cy="57" r="3.5" fill="#00e5ff" filter="url(#glow)"/></g>
+        <rect class="bot-mouth" x="50" y="72" width="20" height="3" rx="1.5" fill="#00e5ff" opacity=".9" transform-origin="60 73.5"/>
+        <circle cx="42" cy="83" r="1.8" fill="#4affd4" opacity=".8"/>
+        <circle cx="60" cy="83" r="1.8" fill="#00e5ff" opacity="1"/>
+        <circle cx="78" cy="83" r="1.8" fill="#b18cff" opacity=".8"/>
+      </svg>
+    </div>
+    <div class="brand">
+      <div class="brand-title">NOVA</div>
+      <div class="brand-sub">Neural Finance Assistant</div>
+      <div class="brand-ver"><span class="pulse-dot"></span><span>SYSTEM ONLINE</span></div>
+    </div>
+    <div class="login-card">
+      <div class="mode-tabs">
+        <button type="button" class="mode-tab active" data-mode="login">登 录</button>
+        <button type="button" class="mode-tab" data-mode="register">注 册</button>
+      </div>
+      <div class="field">
+        <label>身份标识 / Identity</label>
+        <input id="loginUser" type="text" placeholder="2-32 位字母 / 数字 / 中文" autocomplete="username" maxlength="32" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label>访问密钥 / Access Key</label>
+        <input id="loginPass" type="password" placeholder="至少 8 位，含字母和数字" autocomplete="current-password" maxlength="64">
+        <button type="button" class="icon-btn" id="pwdToggle" aria-label="显示密码">👁</button>
+        <div class="pwd-strength" id="pwdStrength">
+          <div class="pwd-bars"><span></span><span></span><span></span><span></span></div>
+          <span class="pwd-text" id="pwdText"></span>
+        </div>
+        <div class="caps-warn" id="capsWarn">⚠ 大写锁定已开启</div>
+      </div>
+      <div class="field invite-field" id="inviteField">
+        <label>邀请码 / Invite Code <span class="invite-badge">🔑 必需</span></label>
+        <input id="inviteCode" type="text" placeholder="输入邀请码" maxlength="20" autocapitalize="characters" spellcheck="false">
+      </div>
+      <button type="button" class="login-btn" id="loginBtn">连 接 N O V A</button>
+      <div class="login-msg" id="loginMsg"></div>
+      <div class="login-foot">
+        <div class="secure">🔒 本机 PBKDF2 加密</div><br>
+        首次使用需邀请码 · 会话关闭即失效
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <section class="page active" id="page-home">
+    <header class="bar">
+      <h1 class="bar-title"><span class="mark">◆</span>NOVA</h1>
+      <div class="bar-right">
+        <span class="user-chip"><span class="dot"></span><span id="userName">用户</span></span>
+        <button type="button" class="avatar-btn" id="logoutBtn" aria-label="退出登录" title="退出登录">
+          <span class="ring"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="io-bar">
+      <button type="button" class="io-btn export" id="exportBtn">⬇ 导出数据</button>
+      <button type="button" class="io-btn import" id="importBtn">⬆ 导入数据</button>
+    </div>
+
+    <div class="balance-card" id="balanceCard">
+      <div class="balance-head">
+        <span class="balance-label">余 额 总 览</span>
+        <span class="balance-badge" id="balanceBadge"><span id="balanceBadgeText">全部时间</span><span class="arrow">▾</span></span>
+      </div>
+      <div class="balance-value" id="balanceValue">¥0</div>
+      <div class="balance-meta">
+        <div class="balance-meta-item"><span class="balance-meta-label">总收入</span><span class="balance-meta-val income" id="totalIncome">¥0</span></div>
+        <div class="balance-meta-item"><span class="balance-meta-label">总支出</span><span class="balance-meta-val expense" id="totalExpense">¥0</span></div>
+      </div>
+    </div>
+
+    <div class="year-section">
+      <div class="year-section-title">时 间 轴</div>
+      <div class="year-nav">
+        <button type="button" class="year-arrow" id="prevYear" aria-label="上一年">‹</button>
+        <div class="year-display" id="yearDisplay">2026</div>
+        <button type="button" class="year-arrow" id="nextYear" aria-label="下一年">›</button>
+      </div>
+      <button type="button" class="year-card" id="yearCard" aria-label="点击进入该年份月份">
+        <span class="year-inner"><span class="year-num" id="yearCardNum">2026</span><span class="year-sub">TAP TO EXPLORE</span></span>
+      </button>
+      <div class="year-quick" id="yearQuick"></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-months">
+    <header class="bar">
+      <button type="button" class="back" id="backToHome">← 返回</button>
+      <h1 class="bar-title" id="monthsTitle">2026<span>全年月份</span></h1>
+      <div></div>
+    </header>
+    <div class="months" id="months"></div>
+  </section>
+
+  <section class="page" id="page-days">
+    <header class="bar">
+      <button type="button" class="back" id="backToMonths">← 返回</button>
+      <h1 class="bar-title" id="daysTitle">2026年一月</h1>
+      <div></div>
+    </header>
+    <div class="days-grid" id="daysGrid"></div>
+    <div class="summary-card" id="summaryCard">
+      <div class="summary-head">
+        <div class="summary-date">
+          <span class="summary-day-num" id="sumNum">01</span>
+          <div class="summary-date-text">
+            <span class="summary-date-line" id="sumDate">2026年1月1日 · 星期四</span>
+            <span class="summary-sub" id="sumSub">2026 年第 1 天</span>
+          </div>
+        </div>
+        <span class="summary-go">编辑 ›</span>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-item"><span class="summary-label">收入</span><span class="summary-value income" id="sumIncome">¥0</span></div>
+        <div class="summary-item"><span class="summary-label">支出</span><span class="summary-value expense" id="sumExpense">¥0</span></div>
+        <div class="summary-item"><span class="summary-label">结余</span><span class="summary-value balance" id="sumBalance">¥0</span></div>
+      </div>
+    </div>
+    <p class="hint">点 击 日 期 查 看 收 支</p>
+  </section>
+</div>
+
+<div class="modal" id="rangeModal" aria-hidden="true">
+  <div class="modal-card range-card" role="dialog" aria-modal="true" aria-label="选择查看范围">
+    <button type="button" class="modal-close" id="rangeClose" aria-label="关闭">×</button>
+    <h3 class="range-title">视 野 范 围</h3>
+    <div class="range-tabs">
+      <button type="button" class="range-tab active" data-range="all">全部</button>
+      <button type="button" class="range-tab" data-range="year">按年</button>
+      <button type="button" class="range-tab" data-range="custom">区间</button>
+    </div>
+    <div class="range-panel" id="rangePanel-all"><div class="range-desc" id="rangeAllDesc">统计 2026 年至今的全部记录</div></div>
+    <div class="range-panel" id="rangePanel-year" hidden><div class="year-picker" id="yearPicker"></div></div>
+    <div class="range-panel" id="rangePanel-custom" hidden>
+      <div class="custom-row"><label>开始月份<input type="month" id="rangeStart" value="2026-01" min="2026-01"></label></div>
+      <div class="custom-row"><label>结束月份<input type="month" id="rangeEnd" value="2026-12" min="2026-01"></label></div>
+    </div>
+    <div class="range-result"><span>结余</span><strong id="rangeResult">¥0</strong></div>
+    <button type="button" class="btn-primary" id="rangeConfirm">确 定</button>
+  </div>
+</div>
+
+<div class="modal" id="editModal" aria-hidden="true">
+  <div class="modal-card edit-card" role="dialog" aria-modal="true" aria-label="编辑记录">
+    <button type="button" class="modal-close" id="editClose" aria-label="关闭">×</button>
+    <div class="edit-head">
+      <div class="edit-date" id="editDate">1月1日</div>
+      <div class="edit-week" id="editWeek">星期四 · 2026 年第 1 天</div>
+    </div>
+    <div class="edit-tabs" id="editTabs">
+      <button type="button" class="tab active" data-tab="work">💼 工作</button>
+      <button type="button" class="tab" data-tab="life">🌿 生活</button>
+    </div>
+    <div class="edit-body">
+      <div class="tab-panel" id="panel-work">
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">工作地点</span><span class="bh-badge" id="locBadge">未填写</span></div>
+          <input id="locInput" class="inp" placeholder="例如：万达广场 3 号楼 502" autocomplete="off" maxlength="100">
+        </div>
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">班次选择</span></div>
+          <div class="seg" id="shiftSeg"><button type="button" data-v="白班">☀️ 白班</button><button type="button" data-v="夜班">🌙 夜班</button></div>
+        </div>
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">上下班时间</span><span class="bh-badge" id="hoursBadge">0 h</span></div>
+          <div class="time-row">
+            <label>上班<input type="time" id="startTime" value="08:00"></label>
+            <label>下班<input type="time" id="endTime" value="20:00"></label>
+          </div>
+        </div>
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">无薪资时段</span><button type="button" class="mini-btn" id="addBreak">＋ 添加</button></div>
+          <div id="breakList"></div>
+        </div>
+        <div class="pay-block" id="payBlock">
+          <div class="pay-left"><span class="pay-label">今日工资</span><span class="pay-val" id="payVal">¥0</span></div>
+          <span class="pay-arrow" id="payArrow">设置模板 ›</span>
+        </div>
+      </div>
+      <div class="tab-panel" id="panel-life" hidden>
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">三餐记录</span><span class="bh-badge warn" id="mealBadge">¥0</span></div>
+          <div class="meal-list">
+            <div class="meal-card">
+              <div class="meal-main"><span class="meal-emoji">🌅</span><span class="meal-name">早饭</span><div class="meal-amount"><span>¥</span><input type="number" class="meal-input" data-meal="breakfast" min="0" step="0.5" placeholder="0" inputmode="decimal"></div></div>
+              <div class="photo-box" id="photoBox-breakfast" data-kind="meal" data-key="breakfast"></div>
+            </div>
+            <div class="meal-card">
+              <div class="meal-main"><span class="meal-emoji">☀️</span><span class="meal-name">午饭</span><div class="meal-amount"><span>¥</span><input type="number" class="meal-input" data-meal="lunch" min="0" step="0.5" placeholder="0" inputmode="decimal"></div></div>
+              <div class="photo-box" id="photoBox-lunch" data-kind="meal" data-key="lunch"></div>
+            </div>
+            <div class="meal-card">
+              <div class="meal-main"><span class="meal-emoji">🌙</span><span class="meal-name">晚饭</span><div class="meal-amount"><span>¥</span><input type="number" class="meal-input" data-meal="dinner" min="0" step="0.5" placeholder="0" inputmode="decimal"></div></div>
+              <div class="photo-box" id="photoBox-dinner" data-kind="meal" data-key="dinner"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">额外支出</span><span class="bh-badge warn" id="extraBadge">¥0</span></div>
+          <div id="extraList"></div>
+          <button type="button" class="mini-btn" id="addExtra" style="margin-left:0;width:100%;padding:11px;margin-top:10px;">＋ 新增支出类目</button>
+        </div>
+        <div class="panel-block" style="border-color:rgba(0,229,255,.3)">
+          <div class="block-head" style="margin-bottom:10px"><span class="bh-title">今日结余</span></div>
+          <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+            <span id="lifeBalance" style="font-size:28px;font-weight:900;color:#4affd4;font-variant-numeric:tabular-nums">¥0</span>
+            <span id="lifeDetail" style="font-size:12px;color:#8b98bd;font-weight:600">工资 ¥0 － 支出 ¥0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="edit-footer">
+      <button type="button" class="btn-reset" id="resetBtn">重置工作</button>
+      <button type="button" class="btn-save" id="saveBtn">保 存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="wageModal" aria-hidden="true">
+  <div class="modal-card wage-card" role="dialog" aria-modal="true" aria-label="工资设置">
+    <button type="button" class="modal-close" id="wageClose" aria-label="关闭">×</button>
+    <h3 class="wage-title">工 资 模 板</h3>
+    <div class="seg" id="wageModeSeg" style="margin-bottom:20px">
+      <button type="button" data-v="hourly">⏱ 小时工</button>
+      <button type="button" data-v="base">🏢 底薪模式</button>
+    </div>
+    <div id="fieldHourly"><div class="wage-field"><label>小时单价（元 / 小时）</label><input type="number" id="hourlyRate" class="inp" min="0" step="0.5" inputmode="decimal"></div></div>
+    <div id="fieldBase" hidden>
+      <div class="wage-field"><label>月底薪（元）</label><input type="number" id="baseSalary" class="inp" min="0" step="100" inputmode="decimal"></div>
+      <div class="wage-field-row">
+        <div class="wage-field"><label>月计薪天数</label><input type="number" id="monthDays" class="inp" min="1" step="0.25" inputmode="decimal"></div>
+        <div class="wage-field"><label>每日标准工时</label><input type="number" id="stdHours" class="inp" min="1" step="0.5" inputmode="decimal"></div>
+      </div>
+    </div>
+    <div class="wage-section">
+      <div class="block-head"><span class="bh-title">补贴 / 津贴</span><button type="button" class="mini-btn" id="addAllow">＋ 添加</button></div>
+      <div id="allowList"></div>
+    </div>
+    <div class="wage-result"><span>预计日薪</span><strong id="wagePreview">¥0</strong></div>
+    <button type="button" class="btn-primary" id="wageConfirm">确 定</button>
+  </div>
+</div>
+
+<input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
+
+<div class="toast" id="toast">已保存</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const MIN_YEAR = 2026;
+  const MAX_YEAR = 2040;
+  const DEFAULT_YEAR = 2026;
+  const INVITE_CODE = 'XIEJIAYU';
+
+  const KEYS = {
+    users: 'nova_users_v3',
+    session: 'nova_session_v3',
+    dataPrefix: 'nova_data_v3_',
+    rangePrefix: 'nova_range_v3_',
+    oldUsers: 'nova_users_v2',
+    oldSession: 'nova_session_v2',
+    oldDataPrefix: 'nova_data_v2_'
+  };
+
+  const SECURITY = {
+    PBKDF2_ITERATIONS: 200000,
+    FALLBACK_ITERATIONS: 50000,
+    SESSION_TTL: 30 * 60 * 1000,
+    MAX_FAIL_BEFORE_LOCK: 5,
+    LOCK_BASE_MS: 5 * 60 * 1000,
+    LOCK_MAX_MS: 60 * 60 * 1000
+  };
+
+  const MONTH_CN = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  const MONTH_EN = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const WD = ['日','一','二','三','四','五','六'];
+
+  const MONTH_EVENTS = {
+    1:  { 1:'元旦', 5:'小寒', 20:'大寒' },
+    2:  { 4:'立春', 17:'春节', 18:'雨水' },
+    3:  { 5:'惊蛰', 8:'妇女节', 20:'春分' },
+    4:  { 5:'清明', 20:'谷雨' },
+    5:  { 1:'劳动节', 5:'立夏', 21:'小满' },
+    6:  { 1:'儿童节', 6:'芒种', 19:'端午节', 21:'夏至' },
+    7:  { 1:'建党节', 7:'小暑', 23:'大暑' },
+    8:  { 1:'建军节', 7:'立秋', 23:'处暑' },
+    9:  { 7:'白露', 10:'教师节', 23:'秋分', 25:'中秋节' },
+    10: { 1:'国庆节', 8:'寒露', 23:'霜降' },
+    11: { 7:'立冬', 22:'小雪' },
+    12: { 7:'大雪', 22:'冬至', 25:'圣诞节' }
+  };
+
+  const MEAL_KEYS = ['breakfast', 'lunch', 'dinner'];
+  const DEFAULT_START = '08:00';
+  const DEFAULT_END = '20:00';
+  const NIGHT_START = '20:00';
+  const NIGHT_END = '08:00';
+
+  const HAS_WEB_CRYPTO = (() => {
+    try { return !!(window.crypto && window.crypto.subtle && typeof window.crypto.subtle.importKey === 'function'); }
+    catch (e) { return false; }
+  })();
+
+  const hex = n => Array.from(n).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  function randomHex(bytes) {
+    const arr = new Uint8Array(bytes);
+    if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(arr);
+    else for (let i = 0; i < bytes; i++) arr[i] = Math.floor(Math.random() * 256);
+    return hex(arr);
+  }
+
+  async function pbkdf2(password, salt, iterations) {
+    const enc = new TextEncoder();
+    const km = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: enc.encode(salt), iterations, hash: 'SHA-256' }, km, 256);
+    return hex(new Uint8Array(bits));
+  }
+
+  function fallbackHash(password, salt, iterations) {
+    const seeds = [0x811c9dc5, 0x9e3779b9, 0x85ebca6b, 0xc2b2ae35];
+    const outs = seeds.slice();
+    const base = password + '\x1f' + salt;
+    for (let i = 0; i < iterations; i++) {
+      const mix = base + '\x1f' + i;
+      for (let j = 0; j < 4; j++) {
+        let h = (outs[j] ^ Math.imul(j + 1, 0x9e3779b9)) >>> 0;
+        for (let k = 0; k < mix.length; k++) { h ^= mix.charCodeAt(k); h = Math.imul(h, 0x01000193) >>> 0; }
+        outs[j] = h >>> 0;
+      }
+    }
+    return outs.map(x => x.toString(16).padStart(8, '0')).join('');
+  }
+
+  async function deriveKey(password, salt, iterations, algorithm) {
+    if (algorithm === 'PBKDF2-SHA256' && HAS_WEB_CRYPTO) return pbkdf2(password, salt, iterations);
+    return fallbackHash(password, salt, Math.min(iterations, SECURITY.FALLBACK_ITERATIONS));
+  }
+
+  async function hashUsername(username) {
+    const normalized = String(username).toLowerCase().trim();
+    const salt = 'nova_user_salt_v3';
+    if (HAS_WEB_CRYPTO) {
+      const enc = new TextEncoder();
+      const digest = await crypto.subtle.digest('SHA-256', enc.encode(salt + '\x1f' + normalized));
+      return hex(new Uint8Array(digest)).substring(0, 32);
+    }
+    return fallbackHash(normalized, salt, 5000);
+  }
+
+  function checkPasswordStrength(p) {
+    if (typeof p !== 'string' || !p) return { ok: false, level: 0, msg: '' };
+    if (p.length < 8) return { ok: false, level: 1, msg: '密钥至少 8 位' };
+    if (p.length > 64) return { ok: false, level: 2, msg: '密钥不能超过 64 位' };
+    const hasLower = /[a-z]/.test(p), hasUpper = /[A-Z]/.test(p), hasDigit = /\d/.test(p), hasSpecial = /[^a-zA-Z0-9]/.test(p);
+    if (!(hasLower || hasUpper)) return { ok: false, level: 1, msg: '密钥必须包含字母' };
+    if (!hasDigit) return { ok: false, level: 2, msg: '密钥必须包含数字' };
+    const weak = ['12345678','password','qwerty123','abc12345','11111111','123456789','password1','admin123'];
+    if (weak.indexOf(p.toLowerCase()) >= 0) return { ok: false, level: 2, msg: '密钥过于常见，请更换' };
+    let level = 2;
+    if (p.length >= 12) level = 3;
+    if (p.length >= 12 && hasSpecial && hasLower && hasUpper) level = 4;
+    else if (p.length >= 10 && hasSpecial) level = 3;
+    return { ok: true, level, msg: '' };
+  }
+
+  function isValidUsername(u) {
+    if (typeof u !== 'string') return false;
+    if (u.length < 2 || u.length > 32) return false;
+    return /^[a-zA-Z0-9_\u4e00-\u9fa5]+$/.test(u);
+  }
+
+  const loadUsers = () => {
+    try { const r = localStorage.getItem(KEYS.users); return r ? JSON.parse(r) : {}; }
+    catch (e) { return {}; }
+  };
+  const saveUsers = users => {
+    try { localStorage.setItem(KEYS.users, JSON.stringify(users)); return true; }
+    catch (e) { return false; }
+  };
+
+  function recordFailure(userKey) {
+    const users = loadUsers();
+    const r = users[userKey];
+    if (!r) return;
+    r.failCount = (r.failCount || 0) + 1;
+    if (r.failCount >= SECURITY.MAX_FAIL_BEFORE_LOCK) {
+      const over = r.failCount - SECURITY.MAX_FAIL_BEFORE_LOCK;
+      r.lockedUntil = Date.now() + Math.min(SECURITY.LOCK_BASE_MS * Math.pow(2, over), SECURITY.LOCK_MAX_MS);
+    }
+    saveUsers(users);
+  }
+  function resetFailure(userKey) {
+    const users = loadUsers();
+    if (users[userKey]) {
+      users[userKey].failCount = 0;
+      users[userKey].lockedUntil = 0;
+      users[userKey].lastLoginAt = Date.now();
+      saveUsers(users);
+    }
+  }
+
+  function createSession(userKey, username) {
+    const now = Date.now();
+    const sess = { token: randomHex(32), userKey, username, createdAt: now, lastActive: now, expiresAt: now + SECURITY.SESSION_TTL };
+    try { sessionStorage.setItem(KEYS.session, JSON.stringify(sess)); } catch (e) {}
+    return sess;
+  }
+  function getSession() {
+    try {
+      const raw = sessionStorage.getItem(KEYS.session);
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      if (!s || !s.token || !s.userKey) return null;
+      if (Date.now() > s.expiresAt) { sessionStorage.removeItem(KEYS.session); return null; }
+      return s;
+    } catch (e) { return null; }
+  }
+  function touchSession() {
+    try {
+      const raw = sessionStorage.getItem(KEYS.session);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (!s || !s.token) return;
+      s.lastActive = Date.now(); s.expiresAt = Date.now() + SECURITY.SESSION_TTL;
+      sessionStorage.setItem(KEYS.session, JSON.stringify(s));
+    } catch (e) {}
+  }
+  const destroySession = () => { try { sessionStorage.removeItem(KEYS.session); } catch (e) {} };
+
+  let currentUserKey = null;
+  let currentUsername = null;
+  let DB = {};
+  let DBYear = null;
+
+  const dataKey = year => KEYS.dataPrefix + (currentUserKey || 'guest') + '_' + year;
+  const rangeKey = () => KEYS.rangePrefix + (currentUserKey || 'guest');
+
+  function loadDB(year) {
+    DBYear = year;
+    try { const r = localStorage.getItem(dataKey(year)); DB = r ? JSON.parse(r) : {}; }
+    catch (e) { DB = {}; }
+  }
+  function saveDB() {
+    try { localStorage.setItem(dataKey(DBYear), JSON.stringify(DB)); return true; }
+    catch (e) { return false; }
+  }
+  function readYearData(year) {
+    try { const r = localStorage.getItem(dataKey(year)); return r ? JSON.parse(r) : {}; }
+    catch (e) { return {}; }
+  }
+  function migrateFromV2(userKey) {
+    let migrated = 0;
+    for (let y = MIN_YEAR; y <= MAX_YEAR; y++) {
+      const newKey = KEYS.dataPrefix + userKey + '_' + y;
+      if (localStorage.getItem(newKey)) continue;
+      const oldData = localStorage.getItem(KEYS.oldDataPrefix + userKey + '_' + y);
+      if (oldData) { try { localStorage.setItem(newKey, oldData); migrated++; } catch (e) {} }
+    }
+    return migrated;
+  }
+
+  const keyOf = (year, m, d) => year + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+
+  const blankMeal = () => ({ amount: '', photo: '' });
+  const blankWage = () => ({ mode: 'hourly', hourlyRate: 25, baseSalary: 5000, monthDays: 21.75, stdHours: 8, allowances: [] });
+  const blankWork = () => ({ enabled: false, location: '', shift: '白班', start: DEFAULT_START, end: DEFAULT_END, breaks: [], wage: blankWage() });
+  const blankLife = () => ({ enabled: true, meals: { breakfast: blankMeal(), lunch: blankMeal(), dinner: blankMeal() }, extras: [] });
+  const blankDay = () => ({ work: blankWork(), life: blankLife() });
+
+  const normalizeMeal = m => ({ amount: m && m.amount != null ? m.amount : '', photo: (m && m.photo) || '' });
+  const normalizeExtra = e => ({ name: (e && e.name) || '', amount: e && e.amount != null ? e.amount : '', photo: (e && e.photo) || '' });
+
+  function getDay(year, m, d) {
+    const k = keyOf(year, m, d);
+    const base = blankDay();
+    const raw = (year === DBYear ? DB[k] : readYearData(year)[k]);
+    if (!raw) return base;
+    const rw = raw.work || {};
+    const rl = raw.life || {};
+    let workEnabled;
+    if (rw.enabled !== undefined) workEnabled = !!rw.enabled;
+    else workEnabled = !!(rw.location || (rw.breaks && rw.breaks.length));
+    const lifeEnabled = rl.enabled !== undefined ? !!rl.enabled : true;
+    return {
+      work: Object.assign(base.work, rw, { enabled: workEnabled, wage: Object.assign(blankWage(), rw.wage || {}) }),
+      life: {
+        enabled: lifeEnabled,
+        meals: {
+          breakfast: normalizeMeal(rl.meals && rl.meals.breakfast),
+          lunch: normalizeMeal(rl.meals && rl.meals.lunch),
+          dinner: normalizeMeal(rl.meals && rl.meals.dinner)
+        },
+        extras: Array.isArray(rl.extras) ? rl.extras.map(normalizeExtra) : []
+      }
+    };
+  }
+
+  const toMin = t => {
+    if (!t || typeof t !== 'string') return null;
+    const [h, m] = t.split(':').map(Number);
+    return isNaN(h) || isNaN(m) ? null : h * 60 + m;
+  };
+  function durationHours(a, b) {
+    const s = toMin(a), e = toMin(b);
+    if (s == null || e == null) return 0;
+    let diff = e - s;
+    if (diff < 0) diff += 1440;
+    return diff / 60;
+  }
+  function calcHours(day) {
+    if (!day.work.enabled) return 0;
+    const w = day.work;
+    let total = durationHours(w.start, w.end);
+    let unpaid = 0;
+    (w.breaks || []).forEach(b => { unpaid += durationHours(b.start, b.end); });
+    return Math.max(0, Math.round((total - unpaid) * 100) / 100);
+  }
+  function calcPay(day) {
+    if (!day.work.enabled) return 0;
+    const h = calcHours(day);
+    const w = day.work.wage || {};
+    let base;
+    if (w.mode === 'base') {
+      const md = Number(w.monthDays) || 21.75;
+      const sh = Number(w.stdHours) || 8;
+      base = h * ((Number(w.baseSalary) || 0) / md / sh);
+    } else { base = h * (Number(w.hourlyRate) || 0); }
+    const allow = (w.allowances || []).reduce((s, a) => s + (Number(a.amount) || 0), 0);
+    return Math.round((base + allow) * 100) / 100;
+  }
+  const calcMealTotal = day => {
+    if (day.life.enabled === false) return 0;
+    const meals = day.life.meals || {};
+    return MEAL_KEYS.reduce((s, k) => s + (Number(meals[k] && meals[k].amount) || 0), 0);
+  };
+  const calcExtraTotal = day => {
+    if (day.life.enabled === false) return 0;
+    return (day.life.extras || []).reduce((s, e) => s + (Number(e.amount) || 0), 0);
+  };
+  const calcExpense = day => calcMealTotal(day) + calcExtraTotal(day);
+  const calcNet = day => Math.round((calcPay(day) - calcExpense(day)) * 100) / 100;
+
+  function fmtMoney(n) {
+    if (!isFinite(n)) n = 0;
+    const r = Math.round(n * 100) / 100;
+    return r % 1 === 0 ? String(r) : r.toFixed(2);
+  }
+  const fmtNet = n => n < 0 ? '-¥' + fmtMoney(Math.abs(n)) : '¥' + fmtMoney(n);
+  function fmtNetShort(n) {
+    const r = Math.round(n);
+    if (r === 0) return '0';
+    return r < 0 ? '-' + Math.abs(r) : String(r);
+  }
+  const daysInMonth = (year, m) => new Date(year, m, 0).getDate();
+  const dayOfYear = (year, m, d) => Math.round((new Date(year, m - 1, d) - new Date(year, 0, 1)) / 86400000) + 1;
+  const escapeHtml = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const dayHasRecord = day => !!day && (!!day.work.enabled || calcExpense(day) > 0);
+
+  function calcRangeTotal(range) {
+    let income = 0, expense = 0;
+    const isCustom = range.type === 'custom';
+    const [sy, sm] = isCustom ? range.start.split('-').map(Number) : [0, 0];
+    const [ey, em] = isCustom ? range.end.split('-').map(Number) : [0, 0];
+    const smVal = sy * 100 + sm;
+    const emVal = ey * 100 + em;
+    const years = range.type === 'year' ? [range.year] : Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i);
+    years.forEach(y => {
+      const ydata = readYearData(y);
+      for (const k in ydata) {
+        if (!Object.prototype.hasOwnProperty.call(ydata, k)) continue;
+        const parts = k.split('-');
+        if (parts.length !== 3 || Number(parts[0]) !== y) continue;
+        const m = Number(parts[1]);
+        if (isCustom) {
+          const ym = y * 100 + m;
+          if (ym < smVal || ym > emVal) continue;
+        }
+        const day = getDay(y, m, Number(parts[2]));
+        income += calcPay(day);
+        expense += calcExpense(day);
+      }
+    });
+    income = Math.round(income * 100) / 100;
+    expense = Math.round(expense * 100) / 100;
+    return { income, expense, balance: Math.round((income - expense) * 100) / 100 };
+  }
+
+  const $ = id => document.getElementById(id);
+  const el = {
+    loginScreen: $('loginScreen'), loginUser: $('loginUser'), loginPass: $('loginPass'),
+    loginBtn: $('loginBtn'), loginMsg: $('loginMsg'), pwdToggle: $('pwdToggle'),
+    pwdStrength: $('pwdStrength'), pwdText: $('pwdText'), capsWarn: $('capsWarn'),
+    botSvg: $('botSvg'), particles: $('particles'),
+    inviteField: $('inviteField'), inviteCode: $('inviteCode'),
+    modeTabs: document.querySelectorAll('.mode-tab'),
+    app: $('app'), userName: $('userName'), logoutBtn: $('logoutBtn'),
+    exportBtn: $('exportBtn'), importBtn: $('importBtn'),
+    balanceCard: $('balanceCard'), balanceValue: $('balanceValue'),
+    totalIncome: $('totalIncome'), totalExpense: $('totalExpense'),
+    balanceBadgeText: $('balanceBadgeText'),
+    prevYear: $('prevYear'), nextYear: $('nextYear'),
+    yearDisplay: $('yearDisplay'), yearCard: $('yearCard'),
+    yearCardNum: $('yearCardNum'), yearQuick: $('yearQuick'),
+    pageHome: $('page-home'), pageMonths: $('page-months'), pageDays: $('page-days'),
+    backToHome: $('backToHome'), monthsTitle: $('monthsTitle'), months: $('months'),
+    backToMonths: $('backToMonths'), daysTitle: $('daysTitle'), daysGrid: $('daysGrid'),
+    summaryCard: $('summaryCard'), sumNum: $('sumNum'), sumDate: $('sumDate'), sumSub: $('sumSub'),
+    sumIncome: $('sumIncome'), sumExpense: $('sumExpense'), sumBalance: $('sumBalance'),
+    rangeModal: $('rangeModal'), rangeClose: $('rangeClose'),
+    rangeTabs: document.querySelectorAll('.range-tab'),
+    rangePanelAll: $('rangePanel-all'), rangePanelYear: $('rangePanel-year'),
+    rangePanelCust: $('rangePanel-custom'), rangeAllDesc: $('rangeAllDesc'),
+    yearPicker: $('yearPicker'), rangeStart: $('rangeStart'), rangeEnd: $('rangeEnd'),
+    rangeResult: $('rangeResult'), rangeConfirm: $('rangeConfirm'),
+    editModal: $('editModal'), editClose: $('editClose'),
+    editDate: $('editDate'), editWeek: $('editWeek'), editTabs: $('editTabs'),
+    panelWork: $('panel-work'), panelLife: $('panel-life'),
+    resetBtn: $('resetBtn'), saveBtn: $('saveBtn'),
+    locInput: $('locInput'), locBadge: $('locBadge'),
+    shiftSeg: $('shiftSeg'), startTime: $('startTime'), endTime: $('endTime'),
+    hoursBadge: $('hoursBadge'), addBreak: $('addBreak'), breakList: $('breakList'),
+    payBlock: $('payBlock'), payVal: $('payVal'), payArrow: $('payArrow'),
+    mealBadge: $('mealBadge'), extraBadge: $('extraBadge'),
+    extraList: $('extraList'), addExtra: $('addExtra'),
+    lifeBalance: $('lifeBalance'), lifeDetail: $('lifeDetail'),
+    photoInput: $('photoInput'),
+    wageModal: $('wageModal'), wageClose: $('wageClose'),
+    wageModeSeg: $('wageModeSeg'), fieldHourly: $('fieldHourly'), fieldBase: $('fieldBase'),
+    hourlyRate: $('hourlyRate'), baseSalary: $('baseSalary'),
+    monthDays: $('monthDays'), stdHours: $('stdHours'),
+    addAllow: $('addAllow'), allowList: $('allowList'),
+    wagePreview: $('wagePreview'), wageConfirm: $('wageConfirm'),
+    toast: $('toast')
+  };
+
+  const state = {
+    year: DEFAULT_YEAR, month: 1, day: 1,
+    draft: null, dirty: false, modalOpen: false, activeTab: 'work',
+    range: { type: 'all' }, authMode: 'login'
+  };
+
+  let photoTarget = null;
+  let wageDraft = null;
+  let rangeDraft = null;
+  let sessionTimer = null;
+
+  let toastTimer = null;
+  const showToast = (msg, isError) => {
+    el.toast.textContent = msg;
+    el.toast.classList.toggle('error', !!isError);
+    el.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.toast.classList.remove('show'), 2200);
+  };
+
+  function initParticles() {
+    if (!el.particles) return;
+    const colors = ['#00e5ff', '#b18cff', '#4affd4', '#4d9fff'];
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < 26; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = (Math.random() * 100) + '%';
+      p.style.animationDuration = (8 + Math.random() * 12) + 's';
+      p.style.animationDelay = (-Math.random() * 20) + 's';
+      const c = colors[Math.floor(Math.random() * colors.length)];
+      p.style.background = c;
+      p.style.boxShadow = '0 0 12px ' + c;
+      p.style.transform = 'scale(' + (0.6 + Math.random() * 1) + ')';
+      frag.appendChild(p);
+    }
+    el.particles.appendChild(frag);
+  }
+
+  const PAGES = [el.pageHome, el.pageMonths, el.pageDays];
+  const switchPage = target => {
+    PAGES.forEach(p => { if (p) p.classList.toggle('active', p === target); });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  function showLoginScreen() {
+    el.loginScreen.classList.add('show');
+    el.app.classList.remove('show');
+    el.loginPass.value = ''; el.inviteCode.value = '';
+    el.loginBtn.disabled = false;
+    el.loginBtn.textContent = '连 接 N O V A';
+    showLoginMsg('', '');
+    hideStrength();
+    el.capsWarn.classList.remove('show');
+    setAuthMode('login');
+    setTimeout(() => { try { el.loginUser.focus(); } catch (e) {} }, 120);
+  }
+  function showApp() {
+    el.loginScreen.classList.remove('show');
+    el.app.classList.add('show');
+  }
+  function setAuthMode(mode) {
+    state.authMode = mode;
+    el.modeTabs.forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+    el.inviteField.classList.toggle('show', mode === 'register');
+    el.loginBtn.textContent = mode === 'register' ? '注 册 N O V A' : '连 接 N O V A';
+    if (mode === 'register') showStrength(); else hideStrength();
+  }
+  function showLoginMsg(text, type) {
+    el.loginMsg.textContent = text;
+    el.loginMsg.className = 'login-msg ' + (type || '');
+    if (!text) el.loginMsg.className = 'login-msg';
+  }
+  function showStrength() {
+    const p = el.loginPass.value;
+    if (!p) { hideStrength(); return; }
+    const s = checkPasswordStrength(p);
+    el.pwdStrength.classList.add('show');
+    el.pwdStrength.dataset.level = String(s.level || 1);
+    if (s.ok) {
+      const labels = { 2: '强度：一般', 3: '强度：良好', 4: '强度：很强' };
+      el.pwdText.textContent = labels[s.level] || '强度：一般';
+    } else { el.pwdText.textContent = s.msg; }
+  }
+  function hideStrength() {
+    el.pwdStrength.classList.remove('show');
+    el.pwdStrength.dataset.level = '0';
+    el.pwdText.textContent = '';
+  }
+
+  async function doAuth() {
+    if (el.loginBtn.disabled) return;
+    const mode = state.authMode;
+    const u = (el.loginUser.value || '').trim();
+    const p = el.loginPass.value;
+    const invite = (el.inviteCode.value || '').trim().toUpperCase();
+
+    if (!isValidUsername(u)) { showLoginMsg('身份标识需 2-32 位，仅限字母、数字、下划线或中文', 'error'); return; }
+    if (!p || p.length < 8) { showLoginMsg('密钥至少 8 位', 'error'); return; }
+    if (p.length > 64) { showLoginMsg('密钥不能超过 64 位', 'error'); return; }
+
+    if (mode === 'register') {
+      if (!invite) { showLoginMsg('请输入邀请码', 'error'); return; }
+      if (invite !== INVITE_CODE) { showLoginMsg('邀请码错误，无法注册', 'error'); return; }
+    }
+
+    el.loginBtn.disabled = true;
+    el.loginBtn.textContent = mode === 'register' ? '注 册 中…' : '连 接 中…';
+    el.botSvg.classList.add('focus');
+    showLoginMsg('', '');
+
+    try {
+      const userKey = await hashUsername(u);
+      const users = loadUsers();
+      const rec = users[userKey];
+
+      if (mode === 'login') {
+        if (!rec) {
+          showLoginMsg('身份不存在，请先注册', 'error');
+          el.loginBtn.disabled = false; el.loginBtn.textContent = '连 接 N O V A'; el.botSvg.classList.remove('focus');
+          return;
+        }
+        if (rec.lockedUntil && Date.now() < rec.lockedUntil) {
+          const remain = Math.ceil((rec.lockedUntil - Date.now()) / 1000);
+          showLoginMsg('身份已临时锁定，请 ' + remain + ' 秒后重试', 'error');
+          el.loginBtn.disabled = false; el.loginBtn.textContent = '连 接 N O V A'; el.botSvg.classList.remove('focus');
+          return;
+        }
+        const derived = await deriveKey(p, rec.salt, rec.iterations, rec.algorithm);
+        if (derived === rec.derivedKey) {
+          resetFailure(userKey);
+          onAuthSuccess(u, userKey, false);
+        } else {
+          recordFailure(userKey);
+          const rec2 = loadUsers()[userKey];
+          if (rec2 && rec2.lockedUntil && Date.now() < rec2.lockedUntil) {
+            const remain = Math.ceil((rec2.lockedUntil - Date.now()) / 1000);
+            showLoginMsg('尝试次数过多，身份锁定 ' + remain + ' 秒', 'error');
+          } else { showLoginMsg('身份或密钥错误', 'error'); }
+          el.loginBtn.disabled = false; el.loginBtn.textContent = '连 接 N O V A'; el.botSvg.classList.remove('focus');
+        }
+      } else {
+        if (rec) {
+          showLoginMsg('身份已存在，请直接登录', 'error');
+          el.loginBtn.disabled = false; el.loginBtn.textContent = '注 册 N O V A'; el.botSvg.classList.remove('focus');
+          return;
+        }
+        const strength = checkPasswordStrength(p);
+        if (!strength.ok) {
+          showLoginMsg(strength.msg, 'error');
+          el.loginBtn.disabled = false; el.loginBtn.textContent = '注 册 N O V A'; el.botSvg.classList.remove('focus');
+          return;
+        }
+        const salt = randomHex(16);
+        const algorithm = HAS_WEB_CRYPTO ? 'PBKDF2-SHA256' : 'FALLBACK';
+        const iterations = HAS_WEB_CRYPTO ? SECURITY.PBKDF2_ITERATIONS : SECURITY.FALLBACK_ITERATIONS;
+        const derived = await deriveKey(p, salt, iterations, algorithm);
+        users[userKey] = {
+          usernameHash: userKey, salt, iterations, derivedKey: derived, algorithm,
+          createdAt: Date.now(), lastLoginAt: Date.now(), failCount: 0, lockedUntil: 0, inviteUsed: invite
+        };
+        if (!saveUsers(users)) {
+          showLoginMsg('注册失败：浏览器存储不可用', 'error');
+          el.loginBtn.disabled = false; el.loginBtn.textContent = '注 册 N O V A'; el.botSvg.classList.remove('focus');
+          return;
+        }
+        const migrated = migrateFromV2(userKey);
+        if (migrated > 0) console.info('[NOVA] 已迁移 ' + migrated + ' 个年份的历史数据');
+        onAuthSuccess(u, userKey, true);
+      }
+    } catch (err) {
+      console.error('认证异常:', err);
+      showLoginMsg('认证异常，请重试', 'error');
+      el.loginBtn.disabled = false;
+      el.loginBtn.textContent = mode === 'register' ? '注 册 N O V A' : '连 接 N O V A';
+      el.botSvg.classList.remove('focus');
+    }
+  }
+
+  function onAuthSuccess(username, userKey, isNew) {
+    currentUserKey = userKey;
+    currentUsername = username;
+    createSession(userKey, username);
+    el.loginPass.value = ''; el.loginUser.value = ''; el.inviteCode.value = '';
+    hideStrength();
+    el.loginBtn.disabled = false; el.botSvg.classList.remove('focus');
+    showLoginMsg('', '');
+    showToast(isNew ? '身份创建成功，欢迎回来' : '连接成功');
+    setTimeout(() => { showApp(); enterHome(); }, 300);
+  }
+
+  function doLogout() {
+    if (!confirm('确认退出登录？')) return;
+    if (state.modalOpen) closeEditModal(true);
+    if (el.wageModal.classList.contains('open')) closeWageModal();
+    if (el.rangeModal.classList.contains('open')) closeRangeModal();
+    destroySession();
+    currentUserKey = null; currentUsername = null;
+    DB = {}; DBYear = null;
+    state.range = { type: 'all' };
+    location.reload();
+  }
+
+  function startSessionWatcher() {
+    if (sessionTimer) clearInterval(sessionTimer);
+    sessionTimer = setInterval(() => {
+      if (!currentUserKey) return;
+      if (!getSession()) location.reload();
+    }, 30000);
+  }
+  function bindSessionTouch() {
+    const handler = () => { if (currentUserKey) touchSession(); };
+    ['click','keydown','touchstart'].forEach(evt => {
+      document.addEventListener(evt, handler, { passive: true, capture: true });
+    });
+  }
+
+  function enterHome() {
+    el.userName.textContent = currentUsername || '用户';
+    state.year = DEFAULT_YEAR;
+    loadDB(state.year);
+    loadRange();
+    refreshHome();
+    switchPage(el.pageHome);
+  }
+  function refreshHome() { refreshBalance(); refreshYearPanel(); }
+  function refreshBalance() {
+    const t = calcRangeTotal(state.range);
+    el.balanceValue.textContent = fmtNet(t.balance);
+    el.balanceValue.classList.toggle('negative', t.balance < 0);
+    el.totalIncome.textContent = '¥' + fmtMoney(t.income);
+    el.totalExpense.textContent = '¥' + fmtMoney(t.expense);
+    el.balanceBadgeText.textContent = rangeLabel(state.range);
+  }
+  function refreshYearPanel() {
+    el.yearDisplay.textContent = state.year;
+    el.yearCardNum.textContent = state.year;
+    el.prevYear.disabled = state.year <= MIN_YEAR;
+    el.nextYear.disabled = state.year >= MAX_YEAR;
+    el.yearQuick.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    for (let y = MIN_YEAR; y <= MAX_YEAR; y++) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'year-chip' + (y === state.year ? ' active' : '');
+      chip.textContent = y;
+      chip.dataset.year = y;
+      chip.addEventListener('click', () => { state.year = y; loadDB(y); refreshYearPanel(); });
+      frag.appendChild(chip);
+    }
+    el.yearQuick.appendChild(frag);
+    requestAnimationFrame(() => {
+      const active = el.yearQuick.querySelector('.year-chip.active');
+      if (active) {
+        const target = active.offsetLeft - el.yearQuick.offsetWidth / 2 + active.offsetWidth / 2;
+        el.yearQuick.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+      }
+    });
+  }
+  function changeYear(delta) {
+    const next = state.year + delta;
+    if (next < MIN_YEAR || next > MAX_YEAR) return;
+    state.year = next; loadDB(next); refreshYearPanel();
+  }
+
+  function loadRange() {
+    try {
+      const raw = localStorage.getItem(rangeKey());
+      if (raw) { const r = JSON.parse(raw); if (r && r.type) state.range = r; }
+    } catch (e) {}
+  }
+  function saveRange() { try { localStorage.setItem(rangeKey(), JSON.stringify(state.range)); } catch (e) {} }
+  function rangeLabel(range) {
+    if (!range) return '全部时间';
+    if (range.type === 'year') return range.year + ' 年';
+    if (range.type === 'custom') return range.start.replace('-', '年') + '月 ~ ' + range.end.replace('-', '年') + '月';
+    return '全部时间';
+  }
+
+  function openRangeModal() {
+    rangeDraft = JSON.parse(JSON.stringify(state.range));
+    el.rangeTabs.forEach(t => t.classList.toggle('active', t.dataset.range === rangeDraft.type));
+    el.rangePanelAll.hidden = rangeDraft.type !== 'all';
+    el.rangePanelYear.hidden = rangeDraft.type !== 'year';
+    el.rangePanelCust.hidden = rangeDraft.type !== 'custom';
+    el.rangeAllDesc.textContent = '统计 ' + MIN_YEAR + ' 年至今的全部记录';
+    buildYearPicker();
+    if (rangeDraft.type === 'custom') {
+      el.rangeStart.value = rangeDraft.start || (MIN_YEAR + '-01');
+      el.rangeEnd.value = rangeDraft.end || (state.year + '-12');
+    } else {
+      el.rangeStart.value = MIN_YEAR + '-01';
+      el.rangeEnd.value = state.year + '-12';
+    }
+    updateRangePreview();
+    el.rangeModal.classList.add('open');
+    el.rangeModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeRangeModal() {
+    el.rangeModal.classList.remove('open');
+    el.rangeModal.setAttribute('aria-hidden', 'true');
+    if (!state.modalOpen && !el.wageModal.classList.contains('open')) document.body.style.overflow = '';
+  }
+  function buildYearPicker() {
+    el.yearPicker.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    for (let y = MIN_YEAR; y <= MAX_YEAR; y++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'year-pick-btn' + ((rangeDraft.type === 'year' && rangeDraft.year === y) ? ' active' : '');
+      btn.textContent = y;
+      btn.addEventListener('click', () => {
+        rangeDraft.type = 'year'; rangeDraft.year = y;
+        el.yearPicker.querySelectorAll('.year-pick-btn').forEach(x => x.classList.toggle('active', x === btn));
+        updateRangePreview();
+      });
+      frag.appendChild(btn);
+    }
+    el.yearPicker.appendChild(frag);
+  }
+  function updateRangePreview() {
+    let range = { type: 'all' };
+    if (rangeDraft.type === 'year') range = { type: 'year', year: rangeDraft.year };
+    else if (rangeDraft.type === 'custom') {
+      const s = el.rangeStart.value || (MIN_YEAR + '-01');
+      const e = el.rangeEnd.value || (state.year + '-12');
+      if (s > e) { el.rangeResult.textContent = '—'; el.rangeResult.classList.remove('negative'); return; }
+      range = { type: 'custom', start: s, end: e };
+    }
+    const t = calcRangeTotal(range);
+    el.rangeResult.textContent = fmtNet(t.balance);
+    el.rangeResult.classList.toggle('negative', t.balance < 0);
+  }
+
+  function enterMonths() {
+    loadDB(state.year);
+    el.monthsTitle.innerHTML = state.year + '<span>全年月份</span>';
+    buildMonthCards();
+    switchPage(el.pageMonths);
+    playCardsAnimation();
+  }
+  function buildMonthCards() {
+    el.months.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    MONTH_CN.forEach((cn, i) => {
+      const hue = (195 + i * 28) % 360;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'month-card';
+      btn.style.setProperty('--h', hue);
+      btn.setAttribute('aria-label', state.year + '年' + cn);
+      btn.innerHTML = '<span class="m-num">' + (i + 1) + '</span><span class="m-cn">' + escapeHtml(cn) + '</span><span class="m-en">' + escapeHtml(MONTH_EN[i]) + '</span>';
+      btn.addEventListener('click', () => openMonth(i + 1));
+      frag.appendChild(btn);
+    });
+    el.months.appendChild(frag);
+  }
+  function playCardsAnimation() {
+    document.querySelectorAll('.month-card').forEach((node, i) => {
+      try {
+        node.animate([{ opacity: 0, transform: 'translateY(24px) scale(.92)' }, { opacity: 1, transform: 'none' }],
+          { duration: 480, delay: i * 38, easing: 'cubic-bezier(.2,.9,.25,1)', fill: 'both' });
+      } catch (e) {}
+    });
+  }
+
+  function openMonth(m) {
+    state.month = m; state.day = 1; state.draft = null; state.dirty = false;
+    closeEditModal(true);
+    const n = daysInMonth(state.year, m);
+    el.daysTitle.innerHTML = state.year + '年' + MONTH_CN[m - 1] + '<span>' + n + '天</span>';
+    buildDaysGrid(m);
+    selectDay(m, 1);
+    switchPage(el.pageDays);
+  }
+  function buildDaysGrid(m) {
+    el.daysGrid.innerHTML = '';
+    const n = daysInMonth(state.year, m);
+    const frag = document.createDocumentFragment();
+    for (let d = 1; d <= n; d++) {
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'grid-day';
+      cell.dataset.day = d;
+      cell.innerHTML = dayCellHTML(state.year, m, d);
+      cell.addEventListener('click', () => selectDay(m, d));
+      frag.appendChild(cell);
+    }
+    el.daysGrid.appendChild(frag);
+  }
+  function dayCellHTML(year, m, d) {
+    const k = keyOf(year, m, d);
+    const ev = (MONTH_EVENTS[m] || {})[d];
+    let moneyHTML = '';
+    const hasData = (year === DBYear ? DB[k] : readYearData(year)[k]);
+    if (hasData) {
+      const day = getDay(year, m, d);
+      if (dayHasRecord(day)) {
+        const net = calcNet(day);
+        const cls = net < 0 ? 'gd-money negative' : 'gd-money';
+        moneyHTML = '<span class="' + cls + '">' + escapeHtml(fmtNetShort(net)) + '</span>';
+      }
+    }
+    const dotHTML = ev ? '<span class="gd-dot"></span>' : '';
+    return dotHTML + '<span class="gd-num">' + d + '</span>' + moneyHTML;
+  }
+  function refreshDayCell(m, d) {
+    const cell = el.daysGrid.querySelector('.grid-day[data-day="' + d + '"]');
+    if (!cell) return;
+    cell.innerHTML = dayCellHTML(state.year, m, d);
+  }
+  function updateActiveCell() {
+    el.daysGrid.querySelectorAll('.grid-day').forEach(c => {
+      c.classList.toggle('active', Number(c.dataset.day) === state.day);
+    });
+  }
+  function selectDay(m, d) {
+    state.month = m; state.day = d;
+    updateActiveCell();
+    renderSummary(m, d);
+  }
+  function renderSummary(m, d) {
+    const year = state.year;
+    const date = new Date(year, m - 1, d);
+    el.sumNum.textContent = String(d).padStart(2, '0');
+    el.sumDate.textContent = year + '年' + m + '月' + d + '日 · 星期' + WD[date.getDay()];
+    el.sumSub.textContent = year + ' 年第 ' + dayOfYear(year, m, d) + ' 天';
+    const k = keyOf(year, m, d);
+    let income = 0, expense = 0;
+    const hasData = (year === DBYear ? DB[k] : readYearData(year)[k]);
+    if (hasData) { const day = getDay(year, m, d); income = calcPay(day); expense = calcExpense(day); }
+    const balance = Math.round((income - expense) * 100) / 100;
+    el.sumIncome.textContent = '¥' + fmtMoney(income);
+    el.sumExpense.textContent = '¥' + fmtMoney(expense);
+    el.sumBalance.textContent = fmtNet(balance);
+    el.sumBalance.classList.toggle('negative', balance < 0);
+  }
+
+  function openEditModal(m, d) {
+    const year = state.year;
+    state.month = m; state.day = d;
+    state.draft = getDay(year, m, d);
+    state.dirty = false; state.modalOpen = true;
+    const date = new Date(year, m - 1, d);
+    el.editDate.textContent = m + '月' + d + '日';
+    el.editWeek.textContent = '星期' + WD[date.getDay()] + ' · ' + year + ' 年第 ' + dayOfYear(year, m, d) + ' 天';
+    fillWorkForm(); fillLifeForm(); refreshPayPreview(); setSaveState('idle'); switchTab('work');
+    el.editModal.classList.add('open');
+    el.editModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeEditModal(silent) {
+    if (!state.modalOpen) return;
+    if (state.dirty && !silent) showToast('未保存的修改已丢弃');
+    el.editModal.classList.remove('open');
+    el.editModal.setAttribute('aria-hidden', 'true');
+    if (!el.wageModal.classList.contains('open') && !el.rangeModal.classList.contains('open')) document.body.style.overflow = '';
+    state.modalOpen = false; state.draft = null; state.dirty = false;
+  }
+  function switchTab(tab) {
+    state.activeTab = tab;
+    el.editTabs.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    el.panelWork.hidden = tab !== 'work';
+    el.panelLife.hidden = tab !== 'life';
+    el.resetBtn.textContent = tab === 'work' ? '重置工作' : '重置生活';
+    if (state.dirty) setSaveState('dirty');
+  }
+
+  function fillWorkForm() {
+    const w = state.draft.work;
+    el.locInput.value = w.location || '';
+    updateLocBadge();
+    el.shiftSeg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v === w.shift));
+    el.startTime.value = w.start || DEFAULT_START;
+    el.endTime.value = w.end || DEFAULT_END;
+    renderBreaks(); updateHoursBadge(); updatePayBlockState();
+  }
+  function updateLocBadge() {
+    if (state.draft.work.location) { el.locBadge.textContent = '已填写'; el.locBadge.classList.remove('warn'); }
+    else { el.locBadge.textContent = '未填写'; el.locBadge.classList.add('warn'); }
+  }
+  function updateHoursBadge() {
+    if (!state.draft.work.enabled) { el.hoursBadge.textContent = '未启用'; el.hoursBadge.classList.add('off'); el.hoursBadge.classList.remove('warn'); }
+    else { el.hoursBadge.textContent = calcHours(state.draft) + ' h'; el.hoursBadge.classList.remove('off', 'warn'); }
+  }
+  function updatePayBlockState() {
+    if (state.draft.work.enabled) { el.payBlock.classList.remove('disabled'); el.payArrow.textContent = '设置模板 ›'; }
+    else { el.payBlock.classList.add('disabled'); el.payArrow.textContent = '编辑后自动启用 ›'; }
+  }
+  function renderBreaks() {
+    el.breakList.innerHTML = '';
+    const list = state.draft.work.breaks || [];
+    if (!list.length) { el.breakList.innerHTML = '<div class="empty-tip">暂无无薪时段（如午休 12:00-13:00）</div>'; return; }
+    list.forEach((b, i) => appendBreakRow(b, i));
+  }
+  function appendBreakRow(b, i) {
+    const row = document.createElement('div');
+    row.className = 'row-item';
+    row.innerHTML = '<input type="time" value="' + escapeHtml(b.start || '12:00') + '"><span class="dash">—</span><input type="time" value="' + escapeHtml(b.end || '13:00') + '"><button type="button" class="del-btn" aria-label="删除">×</button>';
+    const ins = row.querySelectorAll('input');
+    ins[0].addEventListener('change', e => { state.draft.work.breaks[i].start = e.target.value; enableWork(); markDirty(); updateHoursBadge(); refreshPayPreview(); });
+    ins[1].addEventListener('change', e => { state.draft.work.breaks[i].end = e.target.value; enableWork(); markDirty(); updateHoursBadge(); refreshPayPreview(); });
+    row.querySelector('.del-btn').addEventListener('click', () => { state.draft.work.breaks.splice(i, 1); enableWork(); markDirty(); renderBreaks(); updateHoursBadge(); refreshPayPreview(); });
+    el.breakList.appendChild(row);
+  }
+  function enableWork() {
+    if (!state.draft.work.enabled) { state.draft.work.enabled = true; updatePayBlockState(); updateHoursBadge(); }
+  }
+
+  function fillLifeForm() {
+    document.querySelectorAll('.meal-input').forEach(inp => { inp.value = state.draft.life.meals[inp.dataset.meal].amount || ''; });
+    renderExtras(); renderPhotoBoxes(); updateMealBadge(); updateExtraBadge(); updateLifeBalance();
+  }
+  const updateMealBadge = () => { el.mealBadge.textContent = '¥' + fmtMoney(calcMealTotal(state.draft)); };
+  const updateExtraBadge = () => { el.extraBadge.textContent = '¥' + fmtMoney(calcExtraTotal(state.draft)); };
+  function updateLifeBalance() {
+    const pay = calcPay(state.draft);
+    const exp = calcExpense(state.draft);
+    const net = Math.round((pay - exp) * 100) / 100;
+    el.lifeBalance.textContent = fmtNet(net);
+    el.lifeBalance.style.color = net < 0 ? '#ff5c7c' : '#4affd4';
+    el.lifeDetail.textContent = '工资 ¥' + fmtMoney(pay) + ' － 支出 ¥' + fmtMoney(exp);
+  }
+  function refreshPayPreview() { el.payVal.textContent = '¥' + fmtMoney(calcPay(state.draft)); updateLifeBalance(); }
+  function renderExtras() {
+    el.extraList.innerHTML = '';
+    const list = state.draft.life.extras || [];
+    if (!list.length) { el.extraList.innerHTML = '<div class="empty-tip">暂无额外支出，点击下方按钮新增类目</div>'; updateExtraBadge(); return; }
+    list.forEach((it, i) => appendExtraItem(it, i));
+    updateExtraBadge();
+  }
+  function appendExtraItem(it, i) {
+    const row = document.createElement('div');
+    row.className = 'extra-item';
+    row.innerHTML = '<div class="extra-top"><input class="inp extra-name" type="text" placeholder="类目（交通 / 购物 / 医疗…）" value="' + escapeHtml(it.name) + '" maxlength="30"><input class="inp extra-amt" type="number" min="0" step="0.5" inputmode="decimal" placeholder="0.00" value="' + escapeHtml(it.amount === '' || it.amount === undefined ? '' : it.amount) + '"><button type="button" class="del-btn" aria-label="删除">×</button></div><div class="extra-bottom"><div class="photo-box" id="photoBox-extra-' + i + '" data-kind="extra" data-index="' + i + '"></div><span class="extra-hint">点击拍照 / 上传凭证</span></div>';
+    const nameI = row.querySelector('.extra-name');
+    const amtI = row.querySelector('.extra-amt');
+    nameI.addEventListener('input', e => { state.draft.life.extras[i].name = e.target.value; enableLife(); markDirty(); });
+    amtI.addEventListener('input', e => { state.draft.life.extras[i].amount = e.target.value; enableLife(); markDirty(); updateExtraBadge(); updateLifeBalance(); });
+    row.querySelector('.del-btn').addEventListener('click', () => { state.draft.life.extras.splice(i, 1); enableLife(); markDirty(); renderExtras(); renderPhotoBoxes(); updateLifeBalance(); });
+    el.extraList.appendChild(row);
+    const box = row.querySelector('.photo-box');
+    renderPhotoBox(box, it.photo || '', { kind: 'extra', index: i });
+  }
+  function enableLife() { if (state.draft.life.enabled === false) state.draft.life.enabled = true; }
+
+  function renderPhotoBoxes() {
+    MEAL_KEYS.forEach(k => {
+      const box = document.getElementById('photoBox-' + k);
+      if (box) renderPhotoBox(box, state.draft.life.meals[k].photo || '', { kind: 'meal', key: k });
+    });
+    (state.draft.life.extras || []).forEach((e, i) => {
+      const box = document.getElementById('photoBox-extra-' + i);
+      if (box) renderPhotoBox(box, e.photo || '', { kind: 'extra', index: i });
+    });
+  }
+  function renderPhotoBox(box, dataUrl, target) {
+    box.dataset.kind = target.kind;
+    if (target.kind === 'meal') box.dataset.key = target.key;
+    else box.dataset.index = String(target.index);
+    if (dataUrl) {
+      box.classList.add('has-photo');
+      box.innerHTML = '<img src="' + dataUrl + '" alt=""><button type="button" class="photo-remove" aria-label="删除照片">×</button>';
+    } else {
+      box.classList.remove('has-photo');
+      box.innerHTML = '<div class="photo-empty"><span class="photo-icon">📷</span><span class="photo-text">拍照</span></div>';
+    }
+  }
+  function pickPhoto(target) {
+    photoTarget = target;
+    try { el.photoInput.value = ''; } catch (e) {}
+    el.photoInput.click();
+  }
+  function compressImage(file, maxSize, quality) {
+    return new Promise((resolve, reject) => {
+      if (!file || !file.type || !file.type.startsWith('image/')) { reject(new Error('不是图片文件')); return; }
+      if (file.size > 10 * 1024 * 1024) { reject(new Error('图片不能超过 10MB')); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            let w = img.naturalWidth || img.width;
+            let h = img.naturalHeight || img.height;
+            const scale = Math.min(1, maxSize / Math.max(w, h));
+            w = Math.max(1, Math.round(w * scale));
+            h = Math.max(1, Math.round(h * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } catch (err) { reject(err); }
+        };
+        img.onerror = () => reject(new Error('图片加载失败'));
+        img.src = reader.result;
+      };
+      reader.onerror = () => reject(new Error('文件读取失败'));
+      reader.readAsDataURL(file);
+    });
+  }
+  function applyPhoto(target, dataUrl) {
+    if (!target) return;
+    if (target.kind === 'meal') {
+      state.draft.life.meals[target.key].photo = dataUrl;
+      enableLife();
+      const box = document.getElementById('photoBox-' + target.key);
+      if (box) renderPhotoBox(box, dataUrl, target);
+    } else if (target.kind === 'extra') {
+      const item = state.draft.life.extras[target.index];
+      if (item) {
+        item.photo = dataUrl;
+        enableLife();
+        const box = document.getElementById('photoBox-extra-' + target.index);
+        if (box) renderPhotoBox(box, dataUrl, target);
+      }
+    }
+    markDirty();
+  }
+  function clearPhoto(box) {
+    if (!box) return;
+    const kind = box.dataset.kind;
+    if (kind === 'meal') {
+      const key = box.dataset.key;
+      state.draft.life.meals[key].photo = '';
+      renderPhotoBox(box, '', { kind: 'meal', key });
+    } else if (kind === 'extra') {
+      const idx = Number(box.dataset.index);
+      const item = state.draft.life.extras[idx];
+      if (item) item.photo = '';
+      renderPhotoBox(box, '', { kind: 'extra', index: idx });
+    }
+    markDirty();
+  }
+
+  function markDirty() { state.dirty = true; setSaveState('dirty'); }
+  function setSaveState(s) {
+    el.saveBtn.classList.remove('dirty', 'saved');
+    if (s === 'dirty') { el.saveBtn.textContent = '保 存 修 改'; el.saveBtn.classList.add('dirty'); }
+    else if (s === 'saved') { el.saveBtn.textContent = '✓ 已 保 存'; el.saveBtn.classList.add('saved'); }
+    else { el.saveBtn.textContent = '保 存'; }
+  }
+  function resetCurrentTab() {
+    if (state.activeTab === 'work') {
+      state.draft.work = blankWork();
+      state.draft.work.enabled = false;
+      fillWorkForm(); refreshPayPreview();
+      showToast('工作已重置 · 保存后生效');
+    } else {
+      state.draft.life = blankLife();
+      state.draft.life.enabled = false;
+      fillLifeForm(); refreshPayPreview();
+      showToast('生活已重置 · 保存后生效');
+    }
+    markDirty();
+  }
+
+  function openWageModal() {
+    wageDraft = JSON.parse(JSON.stringify(state.draft.work.wage || blankWage()));
+    wageDraft.allowances = wageDraft.allowances || [];
+    el.wageModeSeg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v === wageDraft.mode));
+    el.fieldHourly.hidden = wageDraft.mode !== 'hourly';
+    el.fieldBase.hidden = wageDraft.mode !== 'base';
+    el.hourlyRate.value = wageDraft.hourlyRate ?? 25;
+    el.baseSalary.value = wageDraft.baseSalary ?? 5000;
+    el.monthDays.value = wageDraft.monthDays ?? 21.75;
+    el.stdHours.value = wageDraft.stdHours ?? 8;
+    renderAllowances(); updateWagePreview();
+    el.wageModal.classList.add('open');
+    el.wageModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeWageModal() {
+    el.wageModal.classList.remove('open');
+    el.wageModal.setAttribute('aria-hidden', 'true');
+    if (!state.modalOpen && !el.rangeModal.classList.contains('open')) document.body.style.overflow = '';
+  }
+  function renderAllowances() {
+    el.allowList.innerHTML = '';
+    const list = wageDraft.allowances;
+    if (!list.length) { el.allowList.innerHTML = '<div class="empty-tip">暂无补贴（餐补、全勤、夜班津贴…）</div>'; return; }
+    const frag = document.createDocumentFragment();
+    list.forEach((a, i) => {
+      const row = document.createElement('div');
+      row.className = 'row-item';
+      row.innerHTML = '<input class="inp" style="flex:1.5" type="text" placeholder="补贴名称" value="' + escapeHtml(a.name) + '" maxlength="20"><input class="inp" style="flex:1;text-align:right" type="number" min="0" step="0.5" inputmode="decimal" placeholder="金额" value="' + escapeHtml(a.amount === '' || a.amount === undefined ? '' : a.amount) + '"><button type="button" class="del-btn" aria-label="删除">×</button>';
+      const ins = row.querySelectorAll('input');
+      ins[0].addEventListener('input', e => { wageDraft.allowances[i].name = e.target.value; });
+      ins[1].addEventListener('input', e => { wageDraft.allowances[i].amount = e.target.value; updateWagePreview(); });
+      row.querySelector('.del-btn').addEventListener('click', () => { wageDraft.allowances.splice(i, 1); renderAllowances(); updateWagePreview(); });
+      frag.appendChild(row);
+    });
+    el.allowList.appendChild(frag);
+  }
+  function updateWagePreview() {
+    const tmp = { work: { enabled: true, start: state.draft.work.start, end: state.draft.work.end, breaks: state.draft.work.breaks, wage: wageDraft } };
+    el.wagePreview.textContent = '¥' + fmtMoney(calcPay(tmp));
+  }
+
+  function exportData() {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      data[k] = localStorage.getItem(k);
+    }
+    const json = JSON.stringify(data);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nova-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('已导出！请到「文件」App 的「下载」里找备份文件');
+  }
+  function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (ev) {
+        try {
+          const data = JSON.parse(ev.target.result);
+          let count = 0;
+          for (const k in data) {
+            if (Object.prototype.hasOwnProperty.call(data, k)) {
+              localStorage.setItem(k, data[k]);
+              count++;
+            }
+          }
+          showToast('导入成功！共恢复 ' + count + ' 条数据，即将刷新');
+          setTimeout(() => location.reload(), 800);
+        } catch (err) {
+          showToast('文件格式错误，导入失败', true);
+          console.error(err);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+
+  function bindEvents() {
+    el.modeTabs.forEach(t => {
+      t.addEventListener('click', () => {
+        if (t.dataset.mode === state.authMode) return;
+        setAuthMode(t.dataset.mode);
+        showLoginMsg('', '');
+      });
+    });
+    el.loginBtn.addEventListener('click', doAuth);
+    el.loginUser.addEventListener('keydown', e => { if (e.key === 'Enter') el.loginPass.focus(); });
+    el.loginPass.addEventListener('keydown', e => {
+      if (e.getModifierState && e.getModifierState('CapsLock')) el.capsWarn.classList.add('show');
+      else el.capsWarn.classList.remove('show');
+      if (e.key === 'Enter') {
+        if (state.authMode === 'register') el.inviteCode.focus();
+        else doAuth();
+      }
+    });
+    el.loginPass.addEventListener('input', showStrength);
+    el.inviteCode.addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); });
+    el.pwdToggle.addEventListener('click', () => {
+      const isPwd = el.loginPass.type === 'password';
+      el.loginPass.type = isPwd ? 'text' : 'password';
+      el.pwdToggle.textContent = isPwd ? '🙈' : '👁';
+      el.pwdToggle.setAttribute('aria-label', isPwd ? '隐藏密码' : '显示密码');
+    });
+    [el.loginUser, el.loginPass, el.inviteCode].forEach(inp => {
+      inp.addEventListener('focus', () => el.botSvg.classList.add('focus'));
+      inp.addEventListener('blur', () => el.botSvg.classList.remove('focus'));
+    });
+    el.logoutBtn.addEventListener('click', doLogout);
+    if (el.exportBtn) el.exportBtn.addEventListener('click', exportData);
+    if (el.importBtn) el.importBtn.addEventListener('click', importData);
+    el.balanceCard.addEventListener('click', openRangeModal);
+    el.prevYear.addEventListener('click', () => changeYear(-1));
+    el.nextYear.addEventListener('click', () => changeYear(1));
+    el.yearCard.addEventListener('click', enterMonths);
+    el.backToHome.addEventListener('click', () => { refreshHome(); switchPage(el.pageHome); });
+    el.backToMonths.addEventListener('click', () => { closeEditModal(true); enterMonths(); });
+    el.summaryCard.addEventListener('click', () => openEditModal(state.month, state.day));
+    el.rangeClose.addEventListener('click', closeRangeModal);
+    el.rangeModal.addEventListener('click', e => { if (e.target === el.rangeModal) closeRangeModal(); });
+    el.rangeTabs.forEach(t => {
+      t.addEventListener('click', () => {
+        const type = t.dataset.range;
+        el.rangeTabs.forEach(x => x.classList.toggle('active', x === t));
+        el.rangePanelAll.hidden = type !== 'all';
+        el.rangePanelYear.hidden = type !== 'year';
+        el.rangePanelCust.hidden = type !== 'custom';
+        if (type === 'all') { rangeDraft = { type: 'all' }; }
+        else if (type === 'year') { rangeDraft = { type: 'year', year: rangeDraft.year || state.year }; buildYearPicker(); }
+        else {
+          rangeDraft = { type: 'custom', start: rangeDraft.start || (MIN_YEAR + '-01'), end: rangeDraft.end || (state.year + '-12') };
+          el.rangeStart.value = rangeDraft.start;
+          el.rangeEnd.value = rangeDraft.end;
+        }
+        updateRangePreview();
+      });
+    });
+    el.rangeStart.addEventListener('change', () => { if (el.rangeStart.value) { rangeDraft.type = 'custom'; rangeDraft.start = el.rangeStart.value; updateRangePreview(); } });
+    el.rangeEnd.addEventListener('change', () => { if (el.rangeEnd.value) { rangeDraft.type = 'custom'; rangeDraft.end = el.rangeEnd.value; updateRangePreview(); } });
+    el.rangeConfirm.addEventListener('click', () => {
+      if (rangeDraft.type === 'custom') {
+        const s = el.rangeStart.value || (MIN_YEAR + '-01');
+        const e = el.rangeEnd.value || (state.year + '-12');
+        if (s > e) { showToast('开始月份不能晚于结束月份', true); return; }
+        state.range = { type: 'custom', start: s, end: e };
+      } else if (rangeDraft.type === 'year') {
+        state.range = { type: 'year', year: rangeDraft.year || state.year };
+      } else { state.range = { type: 'all' }; }
+      saveRange(); closeRangeModal(); refreshBalance();
+      showToast('已切换到：' + rangeLabel(state.range));
+    });
+    el.editClose.addEventListener('click', () => closeEditModal(false));
+    el.editModal.addEventListener('click', e => { if (e.target === el.editModal) closeEditModal(false); });
+    el.editTabs.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+    el.resetBtn.addEventListener('click', resetCurrentTab);
+    el.locInput.addEventListener('input', e => { state.draft.work.location = e.target.value; enableWork(); updateLocBadge(); markDirty(); });
+    el.shiftSeg.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => {
+        const v = b.dataset.v;
+        state.draft.work.shift = v;
+        el.shiftSeg.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+        const toNight = v === '夜班' && state.draft.work.start === DEFAULT_START && state.draft.work.end === DEFAULT_END;
+        const toDay = v === '白班' && state.draft.work.start === NIGHT_START && state.draft.work.end === NIGHT_END;
+        if (toNight) { state.draft.work.start = NIGHT_START; state.draft.work.end = NIGHT_END; el.startTime.value = NIGHT_START; el.endTime.value = NIGHT_END; }
+        else if (toDay) { state.draft.work.start = DEFAULT_START; state.draft.work.end = DEFAULT_END; el.startTime.value = DEFAULT_START; el.endTime.value = DEFAULT_END; }
+        enableWork(); markDirty(); updateHoursBadge(); refreshPayPreview();
+      });
+    });
+    el.startTime.addEventListener('change', e => { state.draft.work.start = e.target.value; enableWork(); markDirty(); updateHoursBadge(); refreshPayPreview(); });
+    el.endTime.addEventListener('change', e => { state.draft.work.end = e.target.value; enableWork(); markDirty(); updateHoursBadge(); refreshPayPreview(); });
+    el.addBreak.addEventListener('click', () => {
+      if (!state.draft.work.breaks) state.draft.work.breaks = [];
+      const idx = state.draft.work.breaks.length;
+      const nb = { start: '12:00', end: '13:00' };
+      state.draft.work.breaks.push(nb);
+      if (idx === 0) el.breakList.innerHTML = '';
+      appendBreakRow(nb, idx);
+      enableWork(); markDirty(); updateHoursBadge(); refreshPayPreview();
+    });
+    document.querySelectorAll('.meal-input').forEach(inp => {
+      inp.addEventListener('input', e => {
+        const key = e.target.dataset.meal;
+        state.draft.life.meals[key].amount = e.target.value;
+        enableLife(); markDirty(); updateMealBadge(); updateLifeBalance();
+      });
+    });
+    el.addExtra.addEventListener('click', () => {
+      if (!state.draft.life.extras) state.draft.life.extras = [];
+      const idx = state.draft.life.extras.length;
+      const ne = { name: '', amount: '', photo: '' };
+      state.draft.life.extras.push(ne);
+      if (idx === 0) el.extraList.innerHTML = '';
+      appendExtraItem(ne, idx);
+      enableLife(); markDirty(); updateExtraBadge(); updateLifeBalance();
+      const inputs = el.extraList.querySelectorAll('.extra-name');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
+    el.payBlock.addEventListener('click', openWageModal);
+    el.wageClose.addEventListener('click', closeWageModal);
+    el.wageModal.addEventListener('click', e => { if (e.target === el.wageModal) closeWageModal(); });
+    el.wageModeSeg.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => {
+        wageDraft.mode = b.dataset.v;
+        el.wageModeSeg.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+        el.fieldHourly.hidden = wageDraft.mode !== 'hourly';
+        el.fieldBase.hidden = wageDraft.mode !== 'base';
+        updateWagePreview();
+      });
+    });
+    [el.hourlyRate, el.baseSalary, el.monthDays, el.stdHours].forEach(inp => {
+      inp.addEventListener('input', () => {
+        wageDraft.hourlyRate = el.hourlyRate.value;
+        wageDraft.baseSalary = el.baseSalary.value;
+        wageDraft.monthDays = el.monthDays.value;
+        wageDraft.stdHours = el.stdHours.value;
+        updateWagePreview();
+      });
+    });
+    el.addAllow.addEventListener('click', () => { wageDraft.allowances.push({ name: '', amount: '' }); renderAllowances(); });
+    el.wageConfirm.addEventListener('click', () => {
+      const w = JSON.parse(JSON.stringify(wageDraft));
+      w.hourlyRate = Number(el.hourlyRate.value) || 0;
+      w.baseSalary = Number(el.baseSalary.value) || 0;
+      w.monthDays = Number(el.monthDays.value) || 21.75;
+      w.stdHours = Number(el.stdHours.value) || 8;
+      w.allowances = wageDraft.allowances.map(a => ({ name: a.name || '补贴', amount: Number(a.amount) || 0 }));
+      state.draft.work.wage = w;
+      enableWork(); closeWageModal(); markDirty(); refreshPayPreview();
+      showToast('工资模板已更新');
+    });
+    el.saveBtn.addEventListener('click', () => {
+      const k = keyOf(state.year, state.month, state.day);
+      DB[k] = JSON.parse(JSON.stringify(state.draft));
+      const ok = saveDB();
+      if (ok) {
+        state.dirty = false;
+        setSaveState('saved');
+        showToast('已保存 · ' + state.year + '年' + state.month + '月' + state.day + '日');
+        refreshDayCell(state.month, state.day);
+        renderSummary(state.month, state.day);
+        setTimeout(() => closeEditModal(true), 400);
+      } else { showToast('保存失败：本地存储可能已满', true); }
+    });
+    document.addEventListener('click', e => {
+      const rmBtn = e.target.closest('.photo-remove');
+      if (rmBtn) { e.preventDefault(); e.stopPropagation(); const box = rmBtn.closest('.photo-box'); if (box) clearPhoto(box); return; }
+      const box = e.target.closest('.photo-box');
+      if (!box) return;
+      e.preventDefault();
+      const kind = box.dataset.kind;
+      if (!kind) return;
+      if (kind === 'meal') pickPhoto({ kind: 'meal', key: box.dataset.key });
+      else if (kind === 'extra') pickPhoto({ kind: 'extra', index: Number(box.dataset.index) });
+    }, false);
+    el.photoInput.addEventListener('change', async e => {
+      const file = e.target.files && e.target.files[0];
+      if (!file || !photoTarget) { photoTarget = null; return; }
+      showToast('正在处理照片…');
+      try {
+        const dataUrl = await compressImage(file, 680, 0.6);
+        applyPhoto(photoTarget, dataUrl);
+        showToast('照片已添加 · 点击保存后生效');
+      } catch (err) { showToast(err.message || '照片处理失败', true); }
+      photoTarget = null;
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (el.wageModal.classList.contains('open')) closeWageModal();
+      else if (el.rangeModal.classList.contains('open')) closeRangeModal();
+      else if (state.modalOpen) closeEditModal(true);
+    });
+    bindSessionTouch();
+  }
+
+  function init() {
+    try {
+      initParticles();
+      bindEvents();
+      if (!HAS_WEB_CRYPTO) console.warn('[NOVA] 非安全上下文，已降级使用本地哈希。生产环境请部署到 HTTPS。');
+      const s = getSession();
+      if (s) {
+        currentUserKey = s.userKey;
+        currentUsername = s.username;
+        showApp();
+        enterHome();
+        startSessionWatcher();
+      } else { showLoginScreen(); }
+    } catch (e) {
+      console.error('初始化失败:', e);
+      showLoginScreen();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else { init(); }
+})();
+</script>
+</body>
+</html>
