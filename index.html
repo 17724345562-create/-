@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#04060d" />
+<title>PURE · 智能财务管家</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2300e5ff' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%234affd4'/%3E%3C/svg%3E" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="PURE" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-dark">
+
+<div id="loginScreen">
+  <div class="login-bg"></div>
+  <div class="login-stars" id="loginStars"></div>
+
+  <div class="login-stage">
+    <div class="login-core">
+      <div class="data-field" id="dataField">
+        <svg viewBox="0 0 320 320">
+          <defs>
+            <linearGradient id="gA" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#00e5ff"/><stop offset="100%" stop-color="#4affd4"/>
+            </linearGradient>
+            <linearGradient id="gB" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#b18cff"/><stop offset="100%" stop-color="#00e5ff"/>
+            </linearGradient>
+            <radialGradient id="coreG" cx="50%" cy="50%" r="50%">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset="30%" stop-color="#4affd4"/>
+              <stop offset="70%" stop-color="#00e5ff" stop-opacity=".5"/>
+              <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="fGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <circle class="ring-1" cx="160" cy="160" r="146" fill="none" stroke="url(#gA)" stroke-width="1" stroke-dasharray="2 10" opacity=".45"/>
+          <circle class="ring-2" cx="160" cy="160" r="132" fill="none" stroke="url(#gB)" stroke-width="1.2" stroke-dasharray="20 80" opacity=".55" stroke-linecap="round"/>
+          <circle class="ring-3" cx="160" cy="160" r="118" fill="none" stroke="#00e5ff" stroke-width="1.4" opacity=".6"/>
+          <circle class="ring-4" cx="160" cy="160" r="118" fill="none" stroke="#4affd4" stroke-width="1.4" opacity=".6"/>
+          <circle cx="160" cy="160" r="106" fill="none" stroke="rgba(0,229,255,.18)" stroke-width="1" stroke-dasharray="1 5"/>
+          <g class="orbit-1"><circle cx="160" cy="70" r="4" fill="#4affd4" filter="url(#fGlow)"/></g>
+          <g class="orbit-2"><circle cx="160" cy="46" r="3.5" fill="#00e5ff" filter="url(#fGlow)"/></g>
+          <g class="orbit-3"><circle cx="160" cy="240" r="3.5" fill="#b18cff" filter="url(#fGlow)"/></g>
+          <g class="orbit-4"><circle cx="160" cy="272" r="3" fill="#ffc94d" filter="url(#fGlow)"/></g>
+          <g opacity=".8">
+            <path d="M 160 66 A 94 94 0 0 1 254 160" fill="none" stroke="#4affd4" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M 160 254 A 94 94 0 0 1 66 160" fill="none" stroke="#00e5ff" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>
+            <path d="M 254 160 A 94 94 0 0 1 160 254" fill="none" stroke="#b18cff" stroke-width="1.6" stroke-linecap="round" opacity=".5"/>
+          </g>
+          <circle class="core" cx="160" cy="160" r="44" fill="url(#coreG)" filter="url(#fGlow)"/>
+          <circle cx="160" cy="160" r="8" fill="#ffffff"/>
+          <circle cx="160" cy="160" r="4" fill="#4affd4"/>
+        </svg>
+      </div>
+
+      <div class="login-brand">
+        <div class="login-logo">PURE</div>
+        <div class="login-sub">Personal Unified Records Engine</div>
+      </div>
+
+      <div class="unlock-card">
+        <label class="unlock-label">访问密钥 / Access Key</label>
+        <div class="unlock-input-wrap">
+          <input id="loginKey" type="password" placeholder="· · · · · · · · · ·" maxlength="32" autocomplete="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <button type="button" class="unlock-btn" id="loginBtn">进 入 系 统</button>
+        <div class="login-msg" id="loginMsg"></div>
+      </div>
+
+      <div class="login-status">
+        <span class="status-dot"></span>
+        <span id="loginStatusText">系统就绪 · 等待密钥</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+
+  <section class="page active" id="tab-home">
+    <header class="bar">
+      <h1 class="bar-title"><span class="bar-mark">◆</span>PURE</h1>
+      <div class="bar-right">
+        <span class="user-chip"><span class="dot"></span><span id="userName">已解锁</span></span>
+      </div>
+    </header>
+
+    <div class="home-grid">
+      <div class="home-col-main">
+        <div class="balance-card" id="balanceCard">
+          <div class="balance-head">
+            <span class="balance-label">余 额 总 览</span>
+            <span class="balance-badge" id="balanceBadge">
+              <span id="balanceBadgeText">全部时间</span><span class="arrow">▾</span>
+            </span>
+          </div>
+          <div class="balance-row">
+            <div class="balance-value" id="balanceValue">¥****</div>
+            <button type="button" class="balance-eye" id="eyeBtn" aria-label="显示金额">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path class="eye-open-path" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+                <circle class="eye-pupil" cx="12" cy="12" r="3"/>
+                <path class="eye-closed-path" d="M3 14s3.5 4 9 4 9-4 9-4"/>
+              </svg>
+            </button>
+          </div>
+          <div class="balance-meta">
+            <div class="balance-meta-item">
+              <span class="balance-meta-label">总收入</span>
+              <span class="balance-meta-val income" id="totalIncome">¥****</span>
+            </div>
+            <div class="balance-meta-item">
+              <span class="balance-meta-label">总支出</span>
+              <span class="balance-meta-val expense" id="totalExpense">¥****</span>
+            </div>
+          </div>
+          <div class="balance-compare" id="balanceCompare" hidden>
+            <div class="bc-item">
+              <span class="bc-label">本月收入 vs 上月</span>
+              <span class="bc-value" id="bcIncome">—</span>
+            </div>
+            <div class="bc-item">
+              <span class="bc-label">本月支出 vs 上月</span>
+              <span class="bc-value" id="bcExpense">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="insight-card" id="insightCard" hidden>
+          <div class="insight-icon">◆</div>
+          <div class="insight-text" id="insightText">分析中…</div>
+        </div>
+      </div>
+
+      <div class="home-col-side">
+        <div class="trend-card">
+          <div class="trend-head">
+            <span class="trend-title">◈ 近 7 日结余</span>
+            <span class="trend-hint" id="trendHint">—</span>
+          </div>
+          <canvas class="trend-canvas" id="trendCanvas" width="600" height="160"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="fund-section">
+      <div class="fund-head">
+        <span class="fund-title">◈ 资金管理</span>
+        <button type="button" class="mini-btn" id="fundAddBtn">＋ 添加账户</button>
+      </div>
+
+      <div class="fund-stack" id="fundStack" hidden></div>
+
+      <div class="fund-list" id="fundList"></div>
+
+      <div class="fund-summary" id="fundSummary">
+        <div class="fund-summary-main">
+          <span class="fs-label">账户资金总和</span>
+          <span class="fs-value" id="fundTotal">¥0</span>
+        </div>
+        <span class="fs-hint" id="fundDiff"></span>
+      </div>
+
+      <button type="button" class="btn-save-fund" id="fundSaveBtn" hidden>保 存 修 改</button>
+    </div>
+  </section>
+
+  <section class="page" id="tab-date">
+    <header class="bar">
+      <h1 class="bar-title"><span class="bar-mark">◆</span>时 间 轴</h1>
+    </header>
+
+    <div class="ym-trigger-row">
+      <button type="button" class="ym-trigger" id="yearTrigger">
+        <span class="ym-label">年 份</span>
+        <span class="ym-value" id="yearValue">未选择</span>
+        <span class="ym-arrow">▾</span>
+      </button>
+      <button type="button" class="ym-trigger" id="monthTrigger" disabled>
+        <span class="ym-label">月 份</span>
+        <span class="ym-value" id="monthValue">未选择</span>
+        <span class="ym-arrow">▾</span>
+      </button>
+    </div>
+
+    <div class="month-overview" id="monthOverview" hidden>
+      <div class="mo-item">
+        <span class="mo-label">本月收入</span>
+        <span class="mo-value income" id="moIncome">¥0</span>
+      </div>
+      <div class="mo-item">
+        <span class="mo-label">本月支出</span>
+        <span class="mo-value expense" id="moExpense">¥0</span>
+      </div>
+      <div class="mo-item">
+        <span class="mo-label">本月结余</span>
+        <span class="mo-value" id="moBalance">¥0</span>
+      </div>
+    </div>
+
+    <div class="view-switch" id="viewSwitch" hidden>
+      <button type="button" class="vs-btn active" data-view="grid">▦ 网格</button>
+      <button type="button" class="vs-btn" data-view="list">☰ 列表</button>
+    </div>
+
+    <div class="days-section" id="daysSection" hidden>
+      <div class="days-head">
+        <h2 class="days-head-title" id="daysTitle">2026年一月</h2>
+        <button type="button" class="days-toggle" id="daysToggle">收起 ▴</button>
+      </div>
+      <div class="days-body" id="daysBody">
+        <div class="days-grid" id="daysGrid"></div>
+      </div>
+
+      <div class="summary-card" id="summaryCard" hidden>
+        <div class="summary-head" id="summaryHead">
+          <div class="summary-date">
+            <span class="summary-day-num" id="sumNum">01</span>
+            <div class="summary-date-text">
+              <span class="summary-date-line" id="sumDate">2026年1月1日 · 星期四</span>
+              <span class="summary-sub" id="sumSub">2026 年第 1 天</span>
+            </div>
+          </div>
+          <span class="summary-edit-tip">点击编辑 ›</span>
+        </div>
+        <div class="summary-grid" id="summaryGrid">
+          <div class="summary-item">
+            <span class="summary-label">收入</span>
+            <span class="summary-value income" id="sumIncome">¥****</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">支出</span>
+            <span class="summary-value expense" id="sumExpense">¥****</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">结余</span>
+            <span class="summary-value balance" id="sumBalance">¥****</span>
+          </div>
+        </div>
+        <div class="summary-placeholder" id="summaryPlaceholder" hidden>
+          <span class="sp-icon">📅</span>
+          <span class="sp-text">点击上方日期查看当日摘要</span>
+        </div>
+      </div>
+
+      <div class="analysis-card" id="analysisCard" hidden>
+        <div class="analysis-head">
+          <span class="analysis-title">◈ 智能分析</span>
+          <button type="button" class="analysis-reset" id="analysisReset">重置</button>
+        </div>
+        <div class="analysis-grid">
+          <button type="button" class="analysis-item" data-mode="income-high">
+            <span class="ai-icon">⬆</span><span class="ai-label">收入最高</span><span class="ai-sub">高于平均</span>
+          </button>
+          <button type="button" class="analysis-item" data-mode="income-low">
+            <span class="ai-icon">⬇</span><span class="ai-label">收入最低</span><span class="ai-sub">低于平均</span>
+          </button>
+          <button type="button" class="analysis-item" data-mode="expense-high">
+            <span class="ai-icon">⬆</span><span class="ai-label">消费最高</span><span class="ai-sub">高于平均</span>
+          </button>
+          <button type="button" class="analysis-item" data-mode="expense-low">
+            <span class="ai-icon">⬇</span><span class="ai-label">消费最低</span><span class="ai-sub">低于平均</span>
+          </button>
+        </div>
+        <div class="analysis-tip" id="analysisTip">点击上方按钮，高亮当月对应日期</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="tab-settings">
+    <header class="bar">
+      <h1 class="bar-title"><span class="bar-mark">◆</span>设 置</h1>
+      <div class="bar-right">
+        <span class="user-chip"><span class="dot"></span><span id="userNameSettings">已解锁</span></span>
+      </div>
+    </header>
+
+    <div class="settings-group">
+      <div class="settings-group-title">数 据 管 理</div>
+      <button type="button" class="settings-item" id="exportBtn">
+        <span class="si-icon">⬇</span>
+        <span class="si-main"><span class="si-title">导出数据</span><span class="si-sub">备份为 JSON 文件</span></span>
+        <span class="si-arrow">›</span>
+      </button>
+      <button type="button" class="settings-item" id="importBtn">
+        <span class="si-icon">⬆</span>
+        <span class="si-main"><span class="si-title">导入数据</span><span class="si-sub">从 JSON 文件恢复</span></span>
+        <span class="si-arrow">›</span>
+      </button>
+      <button type="button" class="settings-item" id="exportEncBtn">
+        <span class="si-icon">🔐</span>
+        <span class="si-main"><span class="si-title">加密导出</span><span class="si-sub">JSON 加密码保护</span></span>
+        <span class="si-arrow">›</span>
+      </button>
+      <button type="button" class="settings-item" id="reportBtn">
+        <span class="si-icon">📄</span>
+        <span class="si-main"><span class="si-title">导出 Word 报表</span><span class="si-sub">年度 / 月度 · 含智能分析</span></span>
+        <span class="si-arrow">›</span>
+      </button>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-title">安 全</div>
+      <button type="button" class="settings-item" id="changeKeyBtn">
+        <span class="si-icon">🔑</span>
+        <span class="si-main"><span class="si-title">修改访问密钥</span><span class="si-sub" id="changeKeySub">当前密钥：默认</span></span>
+        <span class="si-arrow">›</span>
+      </button>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-title">外 观</div>
+      <button type="button" class="settings-item" id="themeBtn">
+        <span class="si-icon">🌓</span>
+        <span class="si-main"><span class="si-title">主题切换</span><span class="si-sub" id="themeSub">当前：深色</span></span>
+        <span class="si-arrow">›</span>
+      </button>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-group-title">账 号</div>
+      <button type="button" class="settings-item danger" id="logoutBtn">
+        <span class="si-icon">⏻</span>
+        <span class="si-main"><span class="si-title">锁定系统</span><span class="si-sub">清除会话，返回解锁页</span></span>
+        <span class="si-arrow">›</span>
+      </button>
+    </div>
+
+    <p class="settings-foot">PURE · 本机存储 · 不上传服务器</p>
+  </section>
+
+  <nav class="bottom-nav">
+    <button type="button" class="nav-item active" data-tab="home">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3l9-8z"/></svg></span>
+      <span class="nav-label">主页</span>
+    </button>
+    <button type="button" class="nav-item" data-tab="date">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+      <span class="nav-label">日期</span>
+    </button>
+    <button type="button" class="nav-item" data-tab="settings">
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      <span class="nav-label">设置</span>
+    </button>
+  </nav>
+</div>
+
+<div class="modal" id="yearModal" aria-hidden="true">
+  <div class="modal-card range-card">
+    <button type="button" class="modal-close" id="yearClose">×</button>
+    <h3 class="range-title">选 择 年 份</h3>
+    <div class="year-picker" id="yearPicker"></div>
+    <button type="button" class="btn-primary" id="yearConfirm">确 定</button>
+  </div>
+</div>
+
+<div class="modal" id="monthModal" aria-hidden="true">
+  <div class="modal-card range-card">
+    <button type="button" class="modal-close" id="monthClose">×</button>
+    <h3 class="range-title">选 择 月 份</h3>
+    <div class="month-picker" id="monthPicker"></div>
+    <button type="button" class="btn-primary" id="monthConfirm">确 定</button>
+  </div>
+</div>
+
+<div class="modal" id="editModal" aria-hidden="true">
+  <div class="modal-card edit-card">
+    <button type="button" class="modal-close" id="editClose">×</button>
+    <div class="edit-head">
+      <div class="edit-date" id="editDate">1月1日</div>
+      <div class="edit-week" id="editWeek">星期 · 第 1 天</div>
+    </div>
+    <div class="edit-tabs" id="editTabs">
+      <button type="button" class="tab active" data-tab="work">💼 工作</button>
+      <button type="button" class="tab" data-tab="life">🌿 生活</button>
+    </div>
+    <div class="edit-body">
+      <div class="tab-panel" id="panel-work">
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">工作地点</span><span class="bh-badge" id="locBadge">未填写</span></div>
+          <input id="locInput" class="inp" placeholder="例如：万达广场 3 号楼 502" autocomplete="off" maxlength="100">
+        </div>
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">班次选择</span></div>
+          <div class="seg" id="shiftSeg">
+            <button type="button" data-v="白班">☀️ 白班</button>
+            <button type="button" data-v="夜班">🌙 夜班</button>
+          </div>
+        </div>
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">上下班时间</span><span class="bh-badge" id="hoursBadge">0 h</span></div>
+          <div class="time-row">
+            <label>上班<input type="time" id="startTime" value="08:00"></label>
+            <label>下班<input type="time" id="endTime" value="20:00"></label>
+          </div>
+        </div>
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">无薪资时段</span><button type="button" class="mini-btn" id="addBreak">＋ 添加</button></div>
+          <div id="breakList"></div>
+        </div>
+        <div class="pay-block" id="payBlock">
+          <div class="pay-left">
+            <span class="pay-label">今日工资</span>
+            <span class="pay-val" id="payVal">¥0</span>
+          </div>
+          <span class="pay-arrow" id="payArrow">设置模板 ›</span>
+        </div>
+      </div>
+      <div class="tab-panel" id="panel-life" hidden>
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">三餐记录</span><span class="bh-badge warn" id="mealBadge">¥0</span></div>
+          <div class="meal-list">
+            <div class="meal-card">
+              <div class="meal-main">
+                <span class="meal-emoji">🌅</span><span class="meal-name">早饭</span>
+                <div class="meal-amount"><span>¥</span><input type="number" class="meal-input" data-meal="breakfast" min="0" step="0.5" placeholder="0" inputmode="decimal"></div>
+              </div>
+              <div class="photo-box" id="photoBox-breakfast" data-kind="meal" data-key="breakfast"></div>
+            </div>
+            <div class="meal-card">
+              <div class="meal-main">
+                <span class="meal-emoji">☀️</span><span class="meal-name">午饭</span>
+                <div class="meal-amount"><span>¥</span><input type="number" class="meal-input" data-meal="lunch" min="0" step="0.5" placeholder="0" inputmode="decimal"></div>
+              </div>
+              <div class="photo-box" id="photoBox-lunch" data-kind="meal" data-key="lunch"></div>
+            </div>
+            <div class="meal-card">
+              <div class="meal-main">
+                <span class="meal-emoji">🌙</span><span class="meal-name">晚饭</span>
+                <div class="meal-amount"><span>¥</span><input type="number" class="meal-input" data-meal="dinner" min="0" step="0.5" placeholder="0" inputmode="decimal"></div>
+              </div>
+              <div class="photo-box" id="photoBox-dinner" data-kind="meal" data-key="dinner"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">额外支出</span><span class="bh-badge warn" id="extraBadge">¥0</span></div>
+          <div id="extraList"></div>
+          <button type="button" class="mini-btn block-add" id="addExtra">＋ 新增支出类目</button>
+        </div>
+        <div class="panel-block">
+          <div class="block-head"><span class="bh-title">其他收入</span><span class="bh-badge income" id="incomeBadge">¥0</span></div>
+          <div id="incomeList"></div>
+          <button type="button" class="mini-btn block-add" id="addIncome">＋ 新增收入类目</button>
+        </div>
+        <div class="panel-block balance-block">
+          <div class="block-head"><span class="bh-title">今日结余</span></div>
+          <div class="life-balance-row">
+            <span id="lifeBalance" class="life-balance-val">¥0</span>
+            <span id="lifeDetail" class="life-balance-detail">工资 ¥0 ＋ 收入 ¥0 － 支出 ¥0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="edit-footer">
+      <button type="button" class="btn-reset" id="resetBtn">重置工作</button>
+      <button type="button" class="btn-save" id="saveBtn">保 存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="wageModal" aria-hidden="true">
+  <div class="modal-card wage-card">
+    <button type="button" class="modal-close" id="wageClose">×</button>
+    <h3 class="wage-title">工 资 模 板</h3>
+    <div class="seg" id="wageModeSeg" style="margin-bottom:20px">
+      <button type="button" data-v="hourly">⏱ 小时工</button>
+      <button type="button" data-v="base">🏢 底薪模式</button>
+    </div>
+    <div id="fieldHourly">
+      <div class="wage-field">
+        <label>小时单价（元 / 小时）</label>
+        <input type="number" id="hourlyRate" class="inp" min="0" step="0.5" inputmode="decimal">
+      </div>
+    </div>
+    <div id="fieldBase" hidden>
+      <div class="wage-field">
+        <label>月底薪（元）</label>
+        <input type="number" id="baseSalary" class="inp" min="0" step="100" inputmode="decimal">
+      </div>
+      <div class="wage-field-row">
+        <div class="wage-field">
+          <label>月计薪天数</label>
+          <input type="number" id="monthDays" class="inp" min="1" step="0.25" inputmode="decimal">
+        </div>
+        <div class="wage-field">
+          <label>每日标准工时</label>
+          <input type="number" id="stdHours" class="inp" min="1" step="0.5" inputmode="decimal">
+        </div>
+      </div>
+    </div>
+    <div class="wage-section">
+      <div class="block-head"><span class="bh-title">补贴 / 津贴</span><button type="button" class="mini-btn" id="addAllow">＋ 添加</button></div>
+      <div id="allowList"></div>
+    </div>
+    <div class="wage-result">
+      <span>预计日薪</span><strong id="wagePreview">¥0</strong>
+    </div>
+    <button type="button" class="btn-primary" id="wageConfirm">确 定</button>
+  </div>
+</div>
+
+<div class="modal" id="rangeModal" aria-hidden="true">
+  <div class="modal-card range-card">
+    <button type="button" class="modal-close" id="rangeClose">×</button>
+    <h3 class="range-title">视 野 范 围</h3>
+    <div class="range-tabs">
+      <button type="button" class="range-tab active" data-range="all">全部</button>
+      <button type="button" class="range-tab" data-range="year">按年</button>
+      <button type="button" class="range-tab" data-range="custom">区间</button>
+    </div>
+    <div class="range-panel" id="rangePanel-all"><div class="range-desc" id="rangeAllDesc">统计 2026 年至今的全部记录</div></div>
+    <div class="range-panel" id="rangePanel-year" hidden><div class="year-picker" id="rangeYearPicker"></div></div>
+    <div class="range-panel" id="rangePanel-custom" hidden>
+      <div class="custom-row"><label>开始月份<input type="month" id="rangeStart" value="2026-01" min="2026-01"></label></div>
+      <div class="custom-row"><label>结束月份<input type="month" id="rangeEnd" value="2026-12" min="2026-01"></label></div>
+    </div>
+    <div class="range-result"><span>结余</span><strong id="rangeResult">¥0</strong></div>
+    <button type="button" class="btn-primary" id="rangeConfirm">确 定</button>
+  </div>
+</div>
+
+<div class="modal" id="reportModal" aria-hidden="true">
+  <div class="modal-card range-card">
+    <button type="button" class="modal-close" id="reportClose">×</button>
+    <h3 class="range-title">导 出 智 能 报 表</h3>
+    <div class="seg" id="reportModeSeg" style="margin-bottom:18px">
+      <button type="button" data-v="year" class="active">年度报表</button>
+      <button type="button" data-v="month">月度报表</button>
+    </div>
+    <div id="reportYearField">
+      <div class="custom-row"><label>选择年份<input type="number" id="reportYear" class="inp" min="2026" max="2040" value="2026" inputmode="numeric"></label></div>
+    </div>
+    <div id="reportMonthField" hidden>
+      <div class="custom-row"><label>选择年份<input type="number" id="reportYearM" class="inp" min="2026" max="2040" value="2026" inputmode="numeric"></label></div>
+      <div class="custom-row"><label>选择月份<input type="number" id="reportMonth" class="inp" min="1" max="12" value="1" inputmode="numeric"></label></div>
+    </div>
+    <div class="range-desc" id="reportDesc">年度报表：1-12 月汇总 + 全年智能洞察</div>
+    <button type="button" class="btn-primary" id="reportConfirm">生 成 智 能 报 表</button>
+  </div>
+</div>
+
+<div class="modal" id="fundModal" aria-hidden="true">
+  <div class="modal-card range-card">
+    <button type="button" class="modal-close" id="fundClose">×</button>
+    <h3 class="range-title" id="fundModalTitle">编辑账户</h3>
+    <div class="custom-row"><label>账户名称<input type="text" id="fundName" class="inp" maxlength="20" placeholder="微信 / 支付宝 / 银行卡…"></label></div>
+    <div class="custom-row"><label>金额<input type="number" id="fundAmount" class="inp" min="0" step="0.01" placeholder="0.00" inputmode="decimal"></label></div>
+    <button type="button" class="btn-primary" id="fundConfirm">确 认</button>
+    <button type="button" class="btn-danger-full" id="fundDelete" hidden>删 除 账 户</button>
+  </div>
+</div>
+
+<div class="modal" id="encExportModal" aria-hidden="true">
+  <div class="modal-card range-card">
+    <button type="button" class="modal-close" id="encExportClose">×</button>
+    <h3 class="range-title">加 密 导 出</h3>
+    <div class="custom-row"><label>导出密码（至少 6 位）<input type="password" id="encExportPwd" class="inp" maxlength="64" placeholder="给这份备份设个密码"></label></div>
+    <div class="custom-row"><label>确认密码<input type="password" id="encExportPwd2" class="inp" maxlength="64" placeholder="再次输入"></label></div>
+    <div class="range-desc">导出后需用此密码才能导入。忘记密码数据无法恢复。</div>
+    <button type="button" class="btn-primary" id="encExportConfirm">导 出 加 密 文 件</button>
+  </div>
+</div>
+
+<div class="modal" id="encImportModal" aria-hidden="true">
+  <div class="modal-card range-card">
+    <button type="button" class="modal-close" id="encImportClose">×</button>
+    <h3 class="range-title">解 密 导 入</h3>
+    <div class="range-desc" id="encImportHint">检测到加密备份文件，请输入导出时设置的密码。</div>
+    <div class="custom-row"><label>导出密码<input type="password" id="encImportPwd" class="inp" maxlength="64" placeholder="输入导出时的密码"></label></div>
+    <div class="login-msg" id="encImportMsg"></div>
+    <button type="button" class="btn-primary" id="encImportConfirm">解 密 并 导 入</button>
+  </div>
+</div>
+
+<div class="modal" id="changeKeyModal" aria-hidden="true">
+  <div class="modal-card range-card">
+    <button type="button" class="modal-close" id="changeKeyClose">×</button>
+    <h3 class="range-title">修 改 访 问 密 钥</h3>
+    <div class="custom-row"><label>当前密钥<input type="password" id="oldKey" class="inp" maxlength="32" placeholder="输入当前密钥" autocomplete="off"></label></div>
+    <div class="custom-row"><label>新密钥（6-32 位）<input type="password" id="newKey" class="inp" maxlength="32" placeholder="至少 6 位" autocomplete="off"></label></div>
+    <div class="custom-row"><label>确认新密钥<input type="password" id="newKey2" class="inp" maxlength="32" placeholder="再次输入" autocomplete="off"></label></div>
+    <div class="login-msg" id="changeKeyMsg"></div>
+    <button type="button" class="btn-primary" id="changeKeyConfirm">确 认 修 改</button>
+  </div>
+</div>
+
+<input type="file" id="photoInput" accept="image/*" hidden>
+<div class="toast" id="toast">已保存</div>
+
+<script src="script.js"></script>
+</body>
+</html>
