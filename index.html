@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>工资记录 · 极简</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #ffffff;
+      display: flex;
+      justify-content: center;
+      padding: 1.5rem 1rem 3rem;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    /* 头部 */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: -0.4px;
+      color: #0b1b2f;
+    }
+
+    .subhead {
+      font-size: 0.85rem;
+      color: #7b8a9e;
+      margin-bottom: 2.2rem;
+      padding-left: 2px;
+    }
+
+    /* 卡片通用样式 — 纯白 + 细边框 */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e9eef3;
+      border-radius: 16px;
+      padding: 1.4rem 1.5rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.15s;
+    }
+
+    .card-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8b9eb0;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-value {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #0b1b2f;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      display: flex;
+      align-items: baseline;
+      gap: 0.2rem;
+    }
+
+    .card-value small {
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: #8b9eb0;
+    }
+
+    /* 编辑按钮 — 极简文字按钮 */
+    .edit-btn {
+      background: none;
+      border: none;
+      font-size: 0.8rem;
+      color: #8b9eb0;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      border-radius: 6px;
+      transition: background 0.1s, color 0.1s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      font-weight: 400;
+    }
+
+    .edit-btn:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    /* 总存款编辑模式 */
+    .edit-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 0.2rem;
+    }
+
+    .edit-row input {
+      flex: 1;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #dde5ed;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #0b1b2f;
+      background: #ffffff;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+
+    .edit-row input:focus {
+      outline: none;
+      border-color: #94a3b8;
+      box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+
+    .edit-actions button {
+      padding: 0.45rem 1rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.1s;
+    }
+
+    .save-btn {
+      background: #0b1b2f;
+      color: white;
+      border-color: #0b1b2f;
+    }
+
+    .save-btn:hover {
+      background: #1e3a5f;
+    }
+
+    .cancel-btn {
+      background: white;
+      border-color: #dde5ed;
+      color: #5e6f8c;
+    }
+
+    .cancel-btn:hover {
+      background: #f8fafd;
+    }
+
+    /* 分隔线 */
+    .divider {
+      height: 1px;
+      background: #e9eef3;
+      margin: 0.5rem 0 1rem;
+      border: none;
+    }
+
+    /* 年份导航 */
+    .year-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 1.5rem 0 1.2rem;
+      padding: 0.3rem 0;
+    }
+
+    .year-nav button {
+      background: none;
+      border: 1px solid #e9eef3;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: #1e293b;
+      transition: all 0.1s;
+    }
+
+    .year-nav button:hover {
+      background: #f8fafd;
+      border-color: #cbd5e1;
+    }
+
+    .year-display {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #0b1b2f;
+      letter-spacing: 0.2px;
+    }
+
+    /* 月份网格 */
+    .months-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.7rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (min-width: 500px) {
+      .months-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .month-card {
+      background: #ffffff;
+      border: 1px solid #e9eef3;
+      border-radius: 12px;
+      padding: 0.9rem 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      transition: border-color 0.1s;
+      position: relative;
+    }
+
+    .month-card .month-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #0b1b2f;
+      margin-bottom: 0.15rem;
+    }
+
+    .month-card .month-stat {
+      font-size: 0.75rem;
+      color: #7b8a9e;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .month-card .month-stat span:last-child {
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .month-card .edit-icon-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: none;
+      border: none;
+      font-size: 0.75rem;
+      color: #b0c0d0;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.1s, background 0.1s;
+    }
+
+    .month-card .edit-icon-btn:hover {
+      color: #1e293b;
+      background: #f1f5f9;
+    }
+
+    /* 月份编辑弹窗 / 表单 */
+    .month-edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-top: 0.3rem;
+    }
+
+    .month-edit-form input {
+      padding: 0.35rem 0.5rem;
+      border: 1px solid #dde5ed;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      width: 100%;
+    }
+
+    .month-edit-form input:focus {
+      outline: none;
+      border-color: #94a3b8;
+    }
+
+    .month-edit-form .mini-actions {
+      display: flex;
+      gap: 0.3rem;
+      margin-top: 0.1rem;
+    }
+
+    .month-edit-form .mini-actions button {
+      flex: 1;
+      padding: 0.25rem 0;
+      font-size: 0.65rem;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .mini-save {
+      background: #0b1b2f;
+      color: white;
+    }
+
+    .mini-save:hover {
+      background: #1e3a5f;
+    }
+
+    .mini-cancel {
+      background: white;
+      border-color: #dde5ed;
+      color: #5e6f8c;
+    }
+
+    .mini-cancel:hover {
+      background: #f8fafd;
+    }
+
+    /* 底部操作 */
+    .bottom-actions {
+      display: flex;
+      gap: 0.7rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .bottom-actions .btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 0.8rem 1rem;
+      border-radius: 12px;
+      border: 1px solid #e9eef3;
+      background: white;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #1e293b;
+      cursor: pointer;
+      transition: all 0.1s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .bottom-actions .btn:hover {
+      background: #f8fafd;
+      border-color: #cbd5e1;
+    }
+
+    .bottom-actions .btn-primary {
+      background: #0b1b2f;
+      border-color: #0b1b2f;
+      color: white;
+    }
+
+    .bottom-actions .btn-primary:hover {
+      background: #1e3a5f;
+    }
+
+    #importFile {
+      display: none;
+    }
+
+    .footnote {
+      margin-top: 2rem;
+      font-size: 0.7rem;
+      color: #b0c0d0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- 头部 -->
+  <div class="header">
+    <h1>💰 工资记录</h1>
+  </div>
+  <div class="subhead">按年记录 · 编辑月份 · 导出报表</div>
+
+  <!-- 总存款卡片 (可编辑) -->
+  <div class="card" id="savingsCard">
+    <div class="card-label">
+      <span>💎 总存款</span>
+      <button class="edit-btn" id="editSavingsBtn">✎ 编辑</button>
+    </div>
+    <div class="card-value" id="savingsDisplay">
+      0.00 <small>元</small>
+    </div>
+    <div id="savingsEditContainer" style="display: none;">
+      <div class="edit-row">
+        <input type="number" id="savingsInput" step="0.01" placeholder="输入总存款金额" value="0">
+      </div>
+      <div class="edit-actions">
+        <button class="save-btn" id="saveSavingsBtn">保存</button>
+        <button class="cancel-btn" id="cancelSavingsBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 总结余卡片 (只读，自动统计) -->
+  <div class="card">
+    <div class="card-label">
+      <span>📊 总结余</span>
+      <span style="font-size:0.7rem; color:#b0c0d0;">自动统计</span>
+    </div>
+    <div class="card-value" id="totalBalanceDisplay">
+      0.00 <small>元</small>
+    </div>
+  </div>
+
+  <!-- 年份导航 -->
+  <div class="year-nav">
+    <button id="prevYearBtn" title="上一年">←</button>
+    <span class="year-display" id="yearDisplay">2026</span>
+    <button id="nextYearBtn" title="下一年">→</button>
+  </div>
+
+  <!-- 月份网格 -->
+  <div class="months-grid" id="monthsGrid">
+    <!-- 动态渲染 -->
+  </div>
+
+  <!-- 底部操作 -->
+  <div class="bottom-actions">
+    <button class="btn" id="backupBtn">📤 备份数据</button>
+    <button class="btn" id="importBtn">📥 导入数据</button>
+    <button class="btn btn-primary" id="exportWordBtn">📄 导出报表</button>
+    <input type="file" id="importFile" accept=".json,application/json">
+  </div>
+
+  <div class="footnote">数据自动保存在浏览器中 · 点击月份卡片上的 ✎ 编辑金额</div>
+</div>
+
+<script>
+  (function() {
+    // ---------- 数据模型 ----------
+    // salaries[year][month] = { income: number, balance: number }
+    let salaries = {};
+
+    // 总存款 (手动维护)
+    let totalSavings = 0;
+
+    let currentYear = new Date().getFullYear();
+
+    // DOM 元素
+    const yearDisplay = document.getElementById('yearDisplay');
+    const prevYearBtn = document.getElementById('prevYearBtn');
+    const nextYearBtn = document.getElementById('nextYearBtn');
+    const monthsGrid = document.getElementById('monthsGrid');
+    const savingsDisplay = document.getElementById('savingsDisplay');
+    const savingsEditContainer = document.getElementById('savingsEditContainer');
+    const savingsInput = document.getElementById('savingsInput');
+    const editSavingsBtn = document.getElementById('editSavingsBtn');
+    const saveSavingsBtn = document.getElementById('saveSavingsBtn');
+    const cancelSavingsBtn = document.getElementById('cancelSavingsBtn');
+    const totalBalanceDisplay = document.getElementById('totalBalanceDisplay');
+    const backupBtn = document.getElementById('backupBtn');
+    const importBtn = document.getElementById('importBtn');
+    const importFile = document.getElementById('importFile');
+    const exportWordBtn = document.getElementById('exportWordBtn');
+
+    // ---------- 本地存储 ----------
+    function loadFromLocalStorage() {
+      const stored = localStorage.getItem('salary_records_v3');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed === 'object') {
+            salaries = parsed.salaries || {};
+            totalSavings = parsed.totalSavings || 0;
+          } else {
+            salaries = {};
+            totalSavings = 0;
+          }
+        } catch (e) {
+          salaries = {};
+          totalSavings = 0;
+        }
+      } else {
+        salaries = {};
+        totalSavings = 0;
+      }
+      // 确保当前年份存在
+      if (!salaries[currentYear]) salaries[currentYear] = {};
+    }
+
+    function saveToLocalStorage() {
+      localStorage.setItem('salary_records_v3', JSON.stringify({
+        salaries,
+        totalSavings
+      }));
+    }
+
+    // ---------- 辅助函数 ----------
+    function getMonthData(year, month) {
+      if (salaries[year] && salaries[year][month] !== undefined) {
+        return salaries[year][month];
+      }
+      return { income: 0, balance: 0 };
+    }
+
+    function setMonthData(year, month, income, balance) {
+      if (!salaries[year]) salaries[year] = {};
+      salaries[year][month] = { income: Number(income) || 0, balance: Number(balance) || 0 };
+      saveToLocalStorage();
+    }
+
+    // 计算某年总收入、总结余
+    function getYearTotals(year) {
+      let totalIncome = 0, totalBalance = 0;
+      const yearData = salaries[year] || {};
+      for (let m = 1; m <= 12; m++) {
+        const d = yearData[m] || { income: 0, balance: 0 };
+        totalIncome += d.income || 0;
+        totalBalance += d.balance || 0;
+      }
+      return { totalIncome, totalBalance };
+    }
+
+    // 计算所有年份总结余 (用于展示)
+    function getTotalBalanceAllYears() {
+      let total = 0;
+      for (const year in salaries) {
+        const { totalBalance } = getYearTotals(parseInt(year));
+        total += totalBalance;
+      }
+      return total;
+    }
+
+    // ---------- 渲染月份卡片 (网格) ----------
+    let editingMonth = null; // 当前正在编辑的月份
+
+    function renderMonths() {
+      const yearData = salaries[currentYear] || {};
+      let html = '';
+      for (let m = 1; m <= 12; m++) {
+        const data = yearData[m] || { income: 0, balance: 0 };
+        const income = data.income !== undefined ? data.income : 0;
+        const balance = data.balance !== undefined ? data.balance : 0;
+
+        if (editingMonth === m) {
+          // 编辑模式
+          html += `
+            <div class="month-card" data-month="${m}" style="border-color:#94a3b8;">
+              <div class="month-title">${m}月</div>
+              <div class="month-edit-form">
+                <input type="number" id="editIncome_${m}" value="${income}" step="0.01" min="0" placeholder="收入">
+                <input type="number" id="editBalance_${m}" value="${balance}" step="0.01" min="0" placeholder="结余">
+                <div class="mini-actions">
+                  <button class="mini-save" data-month="${m}" data-action="save">存</button>
+                  <button class="mini-cancel" data-month="${m}" data-action="cancel">消</button>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          // 展示模式
+          html += `
+            <div class="month-card" data-month="${m}">
+              <div class="month-title">${m}月</div>
+              <div class="month-stat"><span>收</span><span>${income.toFixed(2)}</span></div>
+              <div class="month-stat"><span>结</span><span>${balance.toFixed(2)}</span></div>
+              <button class="edit-icon-btn" data-month="${m}" title="编辑">✎</button>
+            </div>
+          `;
+        }
+      }
+      monthsGrid.innerHTML = html;
+
+      // 绑定编辑按钮
+      document.querySelectorAll('.edit-icon-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const month = parseInt(btn.dataset.month);
+          editingMonth = month;
+          renderMonths();
+          const incomeInput = document.getElementById(`editIncome_${month}`);
+          if (incomeInput) incomeInput.focus();
+        });
+      });
+
+      // 绑定保存 / 取消
+      document.querySelectorAll('.mini-save').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const month = parseInt(btn.dataset.month);
+          const incomeInput = document.getElementById(`editIncome_${month}`);
+          const balanceInput = document.getElementById(`editBalance_${month}`);
+          const income = parseFloat(incomeInput.value) || 0;
+          const balance = parseFloat(balanceInput.value) || 0;
+          setMonthData(currentYear, month, income, balance);
+          editingMonth = null;
+          refreshAll();
+        });
+      });
+
+      document.querySelectorAll('.mini-cancel').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          editingMonth = null;
+          renderMonths();
+        });
+      });
+    }
+
+    // ---------- 更新统计 (总存款、总结余) ----------
+    function updateStats() {
+      // 总存款 (手动维护)
+      savingsDisplay.innerHTML = `${totalSavings.toFixed(2)} <small>元</small>`;
+
+      // 总结余 (自动统计所有年份)
+      const totalBalance = getTotalBalanceAllYears();
+      totalBalanceDisplay.innerHTML = `${totalBalance.toFixed(2)} <small>元</small>`;
+    }
+
+    // 刷新所有
+    function refreshAll() {
+      yearDisplay.textContent = currentYear;
+      renderMonths();
+      updateStats();
+    }
+
+    // ---------- 年份切换 ----------
+    function setYear(year) {
+      if (year < 1970) year = 1970;
+      if (year > 2100) year = 2100;
+      currentYear = year;
+      if (!salaries[currentYear]) salaries[currentYear] = {};
+      editingMonth = null;
+      refreshAll();
+    }
+
+    // ---------- 总存款编辑逻辑 ----------
+    function showSavingsEdit() {
+      // 切换为编辑状态
+      savingsDisplay.style.display = 'none';
+      savingsEditContainer.style.display = 'block';
+      editSavingsBtn.style.display = 'none';
+      savingsInput.value = totalSavings;
+      savingsInput.focus();
+    }
+
+    function hideSavingsEdit() {
+      savingsDisplay.style.display = 'flex';
+      savingsEditContainer.style.display = 'none';
+      editSavingsBtn.style.display = 'inline-flex';
+    }
+
+    function saveSavings() {
+      const val = parseFloat(savingsInput.value) || 0;
+      totalSavings = val;
+      saveToLocalStorage();
+      updateStats();
+      hideSavingsEdit();
+    }
+
+    function cancelSavings() {
+      hideSavingsEdit();
+    }
+
+    // 事件绑定 — 总存款编辑
+    editSavingsBtn.addEventListener('click', showSavingsEdit);
+    saveSavingsBtn.addEventListener('click', saveSavings);
+    cancelSavingsBtn.addEventListener('click', cancelSavings);
+
+    // 回车保存
+    savingsInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveSavings();
+      } else if (e.key === 'Escape') {
+        cancelSavings();
+      }
+    });
+
+    // ---------- 年份切换 ----------
+    prevYearBtn.addEventListener('click', () => setYear(currentYear - 1));
+    nextYearBtn.addEventListener('click', () => setYear(currentYear + 1));
+
+    // ---------- 备份数据 ----------
+    backupBtn.addEventListener('click', () => {
+      const dataStr = JSON.stringify({ salaries, totalSavings }, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `工资记录备份_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // ---------- 导入数据 ----------
+    importBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (imported && typeof imported === 'object') {
+            salaries = imported.salaries || {};
+            totalSavings = imported.totalSavings || 0;
+            if (!salaries[currentYear]) salaries[currentYear] = {};
+            saveToLocalStorage();
+            editingMonth = null;
+            refreshAll();
+            alert('导入成功！');
+          } else {
+            alert('导入失败：数据格式不正确');
+          }
+        } catch (err) {
+          alert('导入失败：文件不是有效的JSON');
+        }
+        importFile.value = '';
+      };
+      reader.readAsText(file);
+    });
+
+    // ---------- 导出 Word 报表 ----------
+    exportWordBtn.addEventListener('click', () => {
+      // 弹出选择年份和月份 (使用浏览器原生 prompt 简单实现)
+      const yearInput = prompt('请输入要导出的年份 (如 2026):', currentYear);
+      if (yearInput === null) return;
+      const year = parseInt(yearInput);
+      if (isNaN(year) || year < 1970 || year > 2100) {
+        alert('请输入有效年份 (1970-2100)');
+        return;
+      }
+
+      const monthInput = prompt('请输入月份 (1-12)，输入 0 导出全年:', '0');
+      if (monthInput === null) return;
+      const month = parseInt(monthInput);
+      if (isNaN(month) || month < 0 || month > 12) {
+        alert('请输入有效月份 (0-12)');
+        return;
+      }
+
+      // 构建表格
+      let tableTitle = '';
+      let rows = [];
+
+      if (month === 0) {
+        // 全年
+        tableTitle = `${year}年 年度工资报表`;
+        const yearData = salaries[year] || {};
+        let totalIncome = 0, totalBalance = 0;
+        rows.push(['月份', '收入 (元)', '结余 (元)']);
+        for (let m = 1; m <= 12; m++) {
+          const d = yearData[m] || { income: 0, balance: 0 };
+          const income = d.income || 0;
+          const balance = d.balance || 0;
+          totalIncome += income;
+          totalBalance += balance;
+          rows.push([`${m}月`, income.toFixed(2), balance.toFixed(2)]);
+        }
+        rows.push(['合计', totalIncome.toFixed(2), totalBalance.toFixed(2)]);
+      } else {
+        // 单月
+        tableTitle = `${year}年${month}月 工资报表`;
+        const d = getMonthData(year, month);
+        const income = d.income || 0;
+        const balance = d.balance || 0;
+        rows.push(['项目', '金额 (元)']);
+        rows.push(['收入', income.toFixed(2)]);
+        rows.push(['结余', balance.toFixed(2)]);
+        rows.push(['支出 (收入-结余)', (income - balance).toFixed(2)]);
+      }
+
+      // 生成 HTML 表格
+      let tableHtml = `<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 80%; margin: 20px auto; font-family: Arial, sans-serif;">`;
+      tableHtml += `<tr><th colspan="${month === 0 ? 3 : 2}" style="background: #0b1b2f; color: white; padding: 12px; font-size: 1.2rem;">${tableTitle}</th></tr>`;
+      rows.forEach((row, index) => {
+        const isHeader = index === 0;
+        const isTotal = (month === 0 && index === rows.length - 1 && row[0] === '合计');
+        const bgColor = isHeader ? '#f1f5f9' : (isTotal ? '#e2e8f0' : '#ffffff');
+        const fontWeight = (isHeader || isTotal) ? 'bold' : 'normal';
+        tableHtml += `<tr style="background: ${bgColor}; font-weight: ${fontWeight};">`;
+        row.forEach(cell => {
+          tableHtml += `<td style="padding: 8px 12px; border: 1px solid #cbd5e1; text-align: left;">${cell}</td>`;
+        });
+        tableHtml += `</tr>`;
+      });
+      tableHtml += `</table>`;
+
+      const dateStr = new Date().toLocaleDateString('zh-CN');
+      const fullHtml = `
+        <html>
+          <head><meta charset="UTF-8"><title>${tableTitle}</title></head>
+          <body style="font-family: Arial, sans-serif; padding: 40px 20px;">
+            ${tableHtml}
+            <p style="text-align: center; color: #64748b; font-size: 0.9rem; margin-top: 20px;">生成日期: ${dateStr}</p>
+          </body>
+        </html>
+      `;
+
+      const blob = new Blob([fullHtml], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tableTitle.replace(/\s+/g, '_')}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // ---------- 初始化 ----------
+    function init() {
+      loadFromLocalStorage();
+      currentYear = new Date().getFullYear();
+      if (!salaries[currentYear]) salaries[currentYear] = {};
+      refreshAll();
+    }
+
+    init();
+  })();
+</script>
+</body>
+</html>
