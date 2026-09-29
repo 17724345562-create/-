@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>工资记录</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f7fb;
+      min-height: 100vh;
+      padding: 20px 16px 40px;
+      color: #1a2b4c;
+    }
+    .wrap {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    h1 .tag {
+      font-size: 12px;
+      font-weight: 500;
+      color: #7a8ba3;
+      background: #e9eff7;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    /* 工具栏 */
+    .toolbar {
+      background: #fff;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(0, 20, 40, 0.04);
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    .field:last-child { margin-bottom: 0; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #7a8ba3;
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+    select, input[type="number"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #dce5f0;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #1a2b4c;
+      background: #fff;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      font-family: inherit;
+    }
+    select {
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2212%22%20height%3D%228%22%20viewBox%3D%220%200%2012%208%22%3E%3Cpath%20fill%3D%22%237a8ba3%22%20d%3D%22M6%208L0%200h12z%22%2F%3E%3C%2Fsvg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+    select:focus, input:focus {
+      border-color: #2f6eb3;
+      box-shadow: 0 0 0 3px rgba(47, 110, 179, 0.1);
+    }
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-primary {
+      background: #1a2b4c;
+      color: #fff;
+    }
+
+    /* 统计卡片 */
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(0, 20, 40, 0.04);
+    }
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #7a8ba3;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #2f6eb3;
+    }
+    .dot.green { background: #4a9d6a; }
+    .edit-link {
+      background: transparent;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      color: #2f6eb3;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-family: inherit;
+      border-radius: 8px;
+    }
+    .edit-link:active { background: #eef3ff; }
+    .edit-link:disabled { color: #c5d0dd; cursor: default; }
+
+    .amount {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.8px;
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+    .amount .cny {
+      font-size: 18px;
+      font-weight: 500;
+      color: #9aa9bd;
+    }
+    .amount.green { color: #2f6b48; }
+    .amount-sub {
+      font-size: 13px;
+      color: #8a9aad;
+      margin-top: 6px;
+    }
+
+    /* 底部按钮组 */
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .actions button {
+      padding: 12px;
+      border: 1px solid #dce5f0;
+      border-radius: 12px;
+      background: #fff;
+      color: #2f4c7a;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .actions button:active { background: #f0f6ff; }
+
+    /* 弹窗 */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 25, 45, 0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+    .modal-mask.show { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px 20px 20px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    }
+    .modal h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1a2b4c;
+    }
+    .modal .input-wrap {
+      margin-bottom: 18px;
+    }
+    .modal .input-wrap input {
+      font-size: 22px;
+      font-weight: 700;
+      padding: 12px 14px;
+      text-align: center;
+    }
+    .modal-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .modal-btns button {
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      border: none;
+    }
+    .modal-btns .cancel {
+      background: #f1f5fb;
+      color: #6b7d94;
+    }
+    .modal-btns .confirm {
+      background: #1a2b4c;
+      color: #fff;
+    }
+    .modal-btns button:active { opacity: 0.8; }
+
+    /* 提示 */
+    .toast {
+      position: fixed;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #1a2b4c;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s;
+      z-index: 2000;
+      max-width: 90%;
+      text-align: center;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>工资记录 <span class="tag">动态统计</span></h1>
+
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <div class="field">
+        <label>统计方式</label>
+        <select id="typeSelect">
+          <option value="month">按月统计</option>
+          <option value="year">按年统计</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>年份</label>
+        <select id="yearSelect"></select>
+      </div>
+      <div class="field" id="monthField">
+        <label>月份</label>
+        <select id="monthSelect"></select>
+      </div>
+      <div class="field">
+        <button class="btn btn-primary" id="refreshBtn">刷新数据</button>
+      </div>
+    </div>
+
+    <!-- 收入卡片 -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="dot"></span><span id="incomeLabel">月度收入</span></div>
+        <button class="edit-link" id="editIncomeBtn">编辑</button>
+      </div>
+      <div class="amount">
+        <span class="cny">¥</span>
+        <span id="incomeValue">0.00</span>
+      </div>
+      <div class="amount-sub" id="incomeSub">--</div>
+    </div>
+
+    <!-- 存款卡片 -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="dot green"></span><span>存款</span></div>
+        <button class="edit-link" id="editSavingsBtn">编辑</button>
+      </div>
+      <div class="amount green">
+        <span class="cny">¥</span>
+        <span id="savingsValue">0.00</span>
+      </div>
+      <div class="amount-sub">当前存款总额</div>
+    </div>
+
+    <!-- 底部按钮 -->
+    <div class="actions">
+      <button id="wordYearBtn">年度报表</button>
+      <button id="wordMonthBtn">月度报表</button>
+      <button id="exportBtn">导出数据</button>
+      <button id="importBtn">导入数据</button>
+      <input type="file" id="fileInput" accept=".json" style="display:none">
+    </div>
+  </div>
+
+  <!-- 编辑弹窗 -->
+  <div class="modal-mask" id="modalMask">
+    <div class="modal">
+      <h3 id="modalTitle">编辑</h3>
+      <div class="input-wrap">
+        <input type="number" id="modalInput" step="0.01" min="0" inputmode="decimal">
+      </div>
+      <div class="modal-btns">
+        <button class="cancel" id="modalCancel">取消</button>
+        <button class="confirm" id="modalConfirm">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ============ 数据 ============
+      var salaryData = {};   // { "2026-01": 8000, ... }
+      var savings = 0;
+
+      // ============ 当前查询 ============
+      var today = new Date();
+      var query = {
+        type: 'month',
+        year: today.getFullYear(),
+        month: today.getMonth() + 1
+      };
+
+      var userChanged = false;   // 用户是否手动改过查询
+
+      // ============ DOM 获取 ============
+      function $(id) { return document.getElementById(id); }
+
+      var typeSelect = $('typeSelect');
+      var yearSelect = $('yearSelect');
+      var monthSelect = $('monthSelect');
+      var monthField = $('monthField');
+      var refreshBtn = $('refreshBtn');
+
+      var incomeLabel = $('incomeLabel');
+      var incomeValue = $('incomeValue');
+      var incomeSub = $('incomeSub');
+      var editIncomeBtn = $('editIncomeBtn');
+
+      var savingsValue = $('savingsValue');
+      var editSavingsBtn = $('editSavingsBtn');
+
+      var wordYearBtn = $('wordYearBtn');
+      var wordMonthBtn = $('wordMonthBtn');
+      var exportBtn = $('exportBtn');
+      var importBtn = $('importBtn');
+      var fileInput = $('fileInput');
+
+      var modalMask = $('modalMask');
+      var modalTitle = $('modalTitle');
+      var modalInput = $('modalInput');
+      var modalCancel = $('modalCancel');
+      var modalConfirm = $('modalConfirm');
+
+      var toastEl = $('toast');
+
+      // ============ 工具函数 ============
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(function() {
+          toastEl.classList.remove('show');
+        }, 1800);
+      }
+
+      function fmt(n) {
+        return Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      }
+
+      function getIncome(year, month) {
+        var key = year + '-' + (month < 10 ? '0' + month : month);
+        return salaryData[key] || 0;
+      }
+
+      function getYearTotal(year) {
+        var t = 0;
+        for (var m = 1; m <= 12; m++) t += getIncome(year, m);
+        return t;
+      }
+
+      function getYearAvg(year) {
+        return getYearTotal(year) / 12;
+      }
+
+      // ============ 下拉框填充 ============
+      function fillYearSelect() {
+        var nowYear = new Date().getFullYear();
+        var start = nowYear - 5;
+        var end = nowYear + 1;
+        var html = '';
+        for (var y = start; y <= end; y++) {
+          html += '<option value="' + y + '"' + (y === query.year ? ' selected' : '') + '>' + y + '年</option>';
+        }
+        yearSelect.innerHTML = html;
+        // 如果当前查询年份不在范围内，修正为今年
+        if (query.year < start || query.year > end) {
+          query.year = nowYear;
+          yearSelect.value = nowYear;
+        }
+      }
+
+      function fillMonthSelect() {
+        var html = '';
+        for (var m = 1; m <= 12; m++) {
+          html += '<option value="' + m + '"' + (m === query.month ? ' selected' : '') + '>' + m + '月</option>';
+        }
+        monthSelect.innerHTML = html;
+      }
+
+      // ============ 显示/隐藏月份 ============
+      function updateMonthVisibility() {
+        if (typeSelect.value === 'year') {
+          monthField.style.display = 'none';
+        } else {
+          monthField.style.display = 'block';
+        }
+      }
+
+      // ============ 刷新数值显示 ============
+      function renderValues() {
+        var type = query.type;
+        var year = query.year;
+        var month = query.month;
+
+        if (type === 'year') {
+          var total = getYearTotal(year);
+          var avg = getYearAvg(year);
+          incomeLabel.textContent = '年度收入';
+          incomeValue.textContent = fmt(total);
+          incomeSub.textContent = year + '年 · 月均 ¥' + fmt(avg);
+          editIncomeBtn.disabled = true;
+        } else {
+          var inc = getIncome(year, month);
+          incomeLabel.textContent = '月度收入';
+          incomeValue.textContent = fmt(inc);
+          incomeSub.textContent = year + '年' + month + '月';
+          editIncomeBtn.disabled = false;
+        }
+
+        savingsValue.textContent = fmt(savings);
+      }
+
+      // ============ 执行查询（读取下拉框的值） ============
+      function doQuery() {
+        query.type = typeSelect.value;
+        query.year = parseInt(yearSelect.value, 10);
+        if (query.type === 'month') {
+          query.month = parseInt(monthSelect.value, 10);
+        }
+        renderValues();
+      }
+
+      // ============ 弹窗编辑 ============
+      var editingTarget = null; // 'income' 或 'savings'
+
+      function openModal(target) {
+        editingTarget = target;
+        if (target === 'income') {
+          modalTitle.textContent = '编辑 ' + query.year + '年' + query.month + '月 收入';
+          modalInput.value = getIncome(query.year, query.month);
+        } else {
+          modalTitle.textContent = '编辑存款';
+          modalInput.value = savings;
+        }
+        modalMask.classList.add('show');
+        setTimeout(function() {
+          modalInput.focus();
+          modalInput.select();
+        }, 100);
+      }
+
+      function closeModal() {
+        modalMask.classList.remove('show');
+        editingTarget = null;
+      }
+
+      function confirmModal() {
+        var val = parseFloat(modalInput.value);
+        if (isNaN(val) || val < 0) {
+          showToast('请输入有效的金额');
+          return;
+        }
+        if (editingTarget === 'income') {
+          var key = query.year + '-' + (query.month < 10 ? '0' + query.month : query.month);
+          salaryData[key] = val;
+          showToast('收入已更新');
+        } else if (editingTarget === 'savings') {
+          savings = val;
+          showToast('存款已更新');
+        }
+        closeModal();
+        renderValues();
+      }
+
+      // ============ 导出 Word ============
+      function exportWord(type) {
+        var year = query.year;
+        var month = query.month;
+        var title, content;
+
+        if (type === 'year') {
+          var total = getYearTotal(year);
+          var avg = getYearAvg(year);
+          title = year + '年 年度工资报表';
+          content = '<h2>' + year + '年 年度工资统计</h2>';
+          content += '<table border="1" cellpadding="8" style="border-collapse:collapse;width:100%">';
+          content += '<tr><th>月份</th><th>收入 (¥)</th></tr>';
+          for (var m = 1; m <= 12; m++) {
+            content += '<tr><td>' + m + '月</td><td>' + getIncome(year, m).toFixed(2) + '</td></tr>';
+          }
+          content += '<tr style="font-weight:bold;background:#f2f2f2"><td>全年总计</td><td>' + total.toFixed(2) + '</td></tr>';
+          content += '<tr style="font-weight:bold"><td>月均收入</td><td>' + avg.toFixed(2) + '</td></tr>';
+          content += '</table>';
+          content += '<p style="margin-top:20px">存款总额: ¥' + savings.toFixed(2) + '</p>';
+          content += '<p>生成时间: ' + new Date().toLocaleString() + '</p>';
+        } else {
+          var inc = getIncome(year, month);
+          title = year + '年' + month + '月 工资报表';
+          content = '<h2>' + year + '年' + month + '月 工资明细</h2>';
+          content += '<table border="1" cellpadding="8" style="border-collapse:collapse;width:100%">';
+          content += '<tr><th>项目</th><th>金额 (¥)</th></tr>';
+          content += '<tr><td>当月收入</td><td>' + inc.toFixed(2) + '</td></tr>';
+          content += '<tr><td>当前存款总额</td><td>' + savings.toFixed(2) + '</td></tr>';
+          content += '</table>';
+          content += '<p>生成时间: ' + new Date().toLocaleString() + '</p>';
+        }
+
+        var html = '<html><head><meta charset="UTF-8"><title>' + title + '</title>';
+        html += '<style>body{font-family:"Segoe UI",Arial,sans-serif;padding:30px}h2{color:#1a2b4c}table{border-collapse:collapse;width:100%;margin-top:16px}th{background:#eef3ff}td,th{border:1px solid #aaa;padding:8px;text-align:left}</style>';
+        html += '</head><body>' + content + '</body></html>';
+
+        var blob = new Blob([html], { type: 'application/msword' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = title + '.doc';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+        showToast('已导出 ' + title);
+      }
+
+      // ============ 导出/导入 JSON ============
+      function exportJSON() {
+        var data = { salaryData: salaryData, savings: savings, exportDate: new Date().toISOString() };
+        var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = '工资数据_' + new Date().toISOString().slice(0, 10) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+        showToast('数据已导出');
+      }
+
+      function importJSON(file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            var data = JSON.parse(e.target.result);
+            if (typeof data !== 'object' || !data.salaryData) throw new Error('bad');
+            salaryData = data.salaryData || {};
+            savings = typeof data.savings === 'number' ? data.savings : 0;
+            renderValues();
+            showToast('数据导入成功');
+          } catch (err) {
+            showToast('导入失败：文件格式不正确');
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      // ============ 自动跨年跨月检测 ============
+      var lastYear = today.getFullYear();
+      var lastMonth = today.getMonth() + 1;
+
+      function checkTime() {
+        var now = new Date();
+        var y = now.getFullYear();
+        var m = now.getMonth() + 1;
+        if (y !== lastYear || m !== lastMonth) {
+          lastYear = y;
+          lastMonth = m;
+          fillYearSelect();
+          fillMonthSelect();
+          if (!userChanged) {
+            query.year = y;
+            query.month = m;
+            yearSelect.value = y;
+            monthSelect.value = m;
+            renderValues();
+            showToast('已自动切换到 ' + y + '年' + m + '月');
+          }
+        }
+      }
+
+      // ============ 事件绑定（逐个绑定，确保生效） ============
+
+      // 统计方式切换
+      typeSelect.addEventListener('change', function() {
+        userChanged = true;
+        updateMonthVisibility();
+        doQuery();
+      });
+
+      // 年份切换
+      yearSelect.addEventListener('change', function() {
+        userChanged = true;
+        doQuery();
+      });
+
+      // 月份切换
+      monthSelect.addEventListener('change', function() {
+        userChanged = true;
+        doQuery();
+      });
+
+      // 刷新按钮
+      refreshBtn.addEventListener('click', function() {
+        userChanged = true;
+        doQuery();
+        showToast('已刷新');
+      });
+
+      // 编辑收入
+      editIncomeBtn.addEventListener('click', function() {
+        if (query.type === 'year') {
+          showToast('年度收入不可编辑');
+          return;
+        }
+        openModal('income');
+      });
+
+      // 编辑存款
+      editSavingsBtn.addEventListener('click', function() {
+        openModal('savings');
+      });
+
+      // 弹窗按钮
+      modalCancel.addEventListener('click', closeModal);
+      modalConfirm.addEventListener('click', confirmModal);
+      modalMask.addEventListener('click', function(e) {
+        if (e.target === modalMask) closeModal();
+      });
+      modalInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') confirmModal();
+        if (e.key === 'Escape') closeModal();
+      });
+
+      // 报表
+      wordYearBtn.addEventListener('click', function() { exportWord('year'); });
+      wordMonthBtn.addEventListener('click', function() { exportWord('month'); });
+
+      // 导出/导入
+      exportBtn.addEventListener('click', exportJSON);
+      importBtn.addEventListener('click', function() { fileInput.click(); });
+      fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+          importJSON(e.target.files[0]);
+          fileInput.value = '';
+        }
+      });
+
+      // ============ 启动 ============
+      function init() {
+        // 清空所有数据（按您要求）
+        salaryData = {};
+        savings = 0;
+        try { localStorage.removeItem('salary_last_query'); } catch (e) {}
+
+        // 重置查询为当前年月
+        var n = new Date();
+        query = { type: 'month', year: n.getFullYear(), month: n.getMonth() + 1 };
+        lastYear = n.getFullYear();
+        lastMonth = n.getMonth() + 1;
+        userChanged = false;
+
+        // 同步 UI 控件
+        typeSelect.value = 'month';
+        fillYearSelect();
+        fillMonthSelect();
+        yearSelect.value = query.year;
+        monthSelect.value = query.month;
+        updateMonthVisibility();
+
+        // 首次渲染
+        renderValues();
+
+        // 定时检测跨年跨月
+        setInterval(checkTime, 30000);
+      }
+
+      init();
+
+    })();
+  </script>
+</body>
+</html>
