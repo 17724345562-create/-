@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f5f7fb">
+<title>聚神阁 · 演示版</title>
+<style>
+/* ============================================================
+   聚神阁 · 明亮靛蓝主题
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f7fb;
+  --bg-soft: #eef2f9;
+  --text: #2a3142;
+  --text-strong: #0f1420;
+  --dim: #7a8399;
+  --dimmer: #b3bac9;
+  --card: #ffffff;
+  --border: rgba(15,20,35,.07);
+  --border-strong: rgba(15,20,35,.12);
+  --track: rgba(91,124,250,.14);
+  --accent: #5b7cfa;
+  --accent-h: #4263e8;
+  --accent-l: #7c93ff;
+  --accent-grad: linear-gradient(135deg, #7c93ff, #5b7cfa);
+  --accent-soft: rgba(91,124,250,.1);
+  --accent-border: rgba(91,124,250,.22);
+  --accent-glow: rgba(91,124,250,.28);
+  --green: #2fa96e;
+  --green-soft: rgba(47,169,110,.1);
+  --red: #e05a5a;
+  --red-soft: rgba(224,90,90,.1);
+  --amber: #e89a2c;
+  --amber-soft: rgba(232,154,44,.1);
+  --radius: 16px;
+  --shadow-sm: 0 2px 8px rgba(15,20,35,.04);
+  --shadow-md: 0 4px 16px rgba(15,20,35,.06);
+  --shadow-lg: 0 12px 40px rgba(15,20,35,.12);
+}
+
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+button { font-family: inherit; cursor: pointer; }
+input, textarea, select { font-family: inherit; }
+.mono, .stat-value, .editable-value .number, .compare-val .num, .trend-val, .budget-value { font-variant-numeric: tabular-nums; }
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(15,20,35,.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(91,124,250,.4); }
+
+/* ============================================================
+   应用主体
+   ============================================================ */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ============================================================
+   顶部导航（桌面端）
+   ============================================================ */
+.topnav {
+  flex-shrink: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 22px;
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  z-index: 50;
+}
+.topnav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 22px;
+  padding-right: 22px;
+  border-right: 1px solid var(--border);
+}
+.logo-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: "Songti SC", "STSong", serif;
+  background: var(--accent-grad);
+  color: #fff;
+  box-shadow: 0 4px 12px var(--accent-glow);
+  flex-shrink: 0;
+}
+.logo-text b {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--text-strong);
+  font-family: "Songti SC", "STSong", serif;
+}
+.logo-text span {
+  font-size: 8.5px;
+  letter-spacing: .22em;
+  color: var(--dim);
+}
+.topnav-items {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+.topnav-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 15px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all .18s;
+  user-select: none;
+  white-space: nowrap;
+}
+.topnav-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.topnav-item:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.topnav-item.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 500;
+}
+.topnav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topnav-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+  cursor: pointer;
+  background-size: cover;
+  background-position: center;
+  transition: transform .15s;
+}
+.topnav-avatar:hover { transform: scale(1.05); }
+
+/* 移动端顶栏 */
+.mobile-topbar {
+  display: none;
+  flex-shrink: 0;
+  height: 56px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: rgba(255,255,255,.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  z-index: 50;
+}
+.menu-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.mobile-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--text-strong);
+  font-family: "Songti SC", serif;
+}
+.mobile-topbar .spacer { flex: 1; }
+
+/* ============================================================
+   内容区
+   ============================================================ */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 26px;
+  padding-bottom: 32px;
+  scroll-behavior: smooth;
+}
+
+.page { display: none; }
+.page.active { display: block; animation: fadeUp .35s cubic-bezier(.22,1,.36,1); }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+}
+
+/* ============================================================
+   通用卡片
+   ============================================================ */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .3s;
+}
+.card:hover { box-shadow: var(--shadow-md); }
+
+.card + .card { margin-top: 20px; }
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  gap: 12px;
+}
+.card-head h3 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--text-strong);
+  font-family: "Songti SC", "STSong", "PingFang SC", serif;
+}
+.card-head .count {
+  font-size: 12px;
+  color: var(--dim);
+}
+
+/* 卡片网格 */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+.card-grid.full { grid-template-columns: 1fr; }
+
+/* ============================================================
+   倒数日
+   ============================================================ */
+.countdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px;
+}
+.countdown-card {
+  padding: 20px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: all .25s cubic-bezier(.22,1,.36,1);
+  position: relative;
+  overflow: hidden;
+}
+.countdown-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle at top right, var(--accent-soft), transparent 70%);
+  pointer-events: none;
+}
+.countdown-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent-border);
+}
+.countdown-card .cd-label {
+  font-size: 12.5px;
+  color: var(--dim);
+  letter-spacing: .04em;
+}
+.countdown-card .cd-date {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: "Songti SC", "STSong", serif;
+  letter-spacing: .02em;
+  line-height: 1.1;
+}
+.countdown-card .cd-remain {
+  font-size: 12px;
+  color: var(--dim);
+}
+.countdown-card.urgent .cd-date { color: var(--amber); }
+.countdown-card.urgent .cd-remain { color: var(--amber); }
+.countdown-card.expired .cd-date { color: var(--red); }
+.countdown-card.expired .cd-remain { color: var(--red); }
+
+/* ============================================================
+   月度预算
+   ============================================================ */
+.budget-card {
+  padding: 24px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.budget-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+.budget-label {
+  font-size: 12.5px;
+  color: var(--dim);
+  margin-bottom: 6px;
+  letter-spacing: .04em;
+}
+.budget-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+.budget-value .sep {
+  color: var(--dim);
+  margin: 0 4px;
+  font-weight: 400;
+}
+.budget-percent {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.budget-percent.warn { color: var(--amber); }
+.budget-percent.danger { color: var(--red); }
+.budget-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--track);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.budget-bar-inner {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent-grad);
+  transition: width .5s cubic-bezier(.22,1,.36,1);
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+.budget-bar-inner.warn {
+  background: linear-gradient(135deg, #f0b34a, #e89a2c);
+  box-shadow: 0 2px 8px rgba(232,154,44,.3);
+}
+.budget-bar-inner.danger {
+  background: linear-gradient(135deg, #ff8b8b, #e05a5a);
+  box-shadow: 0 2px 8px rgba(224,90,90,.3);
+}
+.budget-hint {
+  font-size: 12px;
+  color: var(--dim);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ============================================================
+   资金概览（三栏）
+   ============================================================ */
+.fund-overview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  padding: 0;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.fund-cell {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.fund-cell:last-child { border-right: none; }
+.fund-cell .lbl {
+  font-size: 12.5px;
+  color: var(--dim);
+  letter-spacing: .04em;
+}
+.fund-cell .val {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.fund-cell .val.blue { color: var(--accent); }
+.fund-cell .val.green { color: var(--green); }
+.fund-cell .sub {
+  font-size: 11.5px;
+  color: var(--dim);
+}
+.fund-cell .edit-icon {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  color: var(--accent);
+  opacity: .5;
+  transition: opacity .2s;
+}
+.fund-cell:hover .edit-icon { opacity: 1; }
+.fund-cell.clickable { cursor: pointer; }
+.fund-cell.clickable:hover { background: var(--bg-soft); }
+
+/* ============================================================
+   趋势图
+   ============================================================ */
+.trend-chart {
+  height: 180px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px 4px 28px;
+  position: relative;
+}
+.trend-col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+  min-width: 0;
+}
+.trend-bar {
+  width: 100%;
+  max-width: 36px;
+  border-radius: 8px 8px 4px 4px;
+  background: var(--accent-grad);
+  box-shadow: 0 3px 12px var(--accent-glow);
+  animation: growBar .8s cubic-bezier(.22,1,.36,1) backwards;
+  transform-origin: bottom;
+  min-height: 6px;
+}
+@keyframes growBar { from { transform: scaleY(0); } }
+.trend-val {
+  position: absolute;
+  top: -20px;
+  font-size: 11px;
+  color: var(--dim);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.trend-label {
+  position: absolute;
+  bottom: -22px;
+  font-size: 11px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.chart-empty {
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--dimmer);
+  font-size: 13px;
+}
+
+/* ============================================================
+   对比图（数据统计）
+   ============================================================ */
+.period-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-soft);
+  border-radius: 12px;
+  margin-bottom: 22px;
+  width: fit-content;
+}
+.period-tab {
+  padding: 9px 20px;
+  border-radius: 9px;
+  font-size: 13px;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all .18s;
+  user-select: none;
+  white-space: nowrap;
+}
+.period-tab:hover { color: var(--text); }
+.period-tab.active {
+  background: var(--card);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(15,20,35,.06);
+}
+.period-label {
+  font-size: 12.5px;
+  color: var(--dim);
+  text-align: center;
+  margin-bottom: 20px;
+}
+.compare-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 40px;
+  height: 220px;
+  padding: 0 8px 32px;
+  position: relative;
+}
+.compare-group {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+  min-width: 0;
+}
+.compare-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  width: 50%;
+  max-width: 48px;
+  position: relative;
+}
+.compare-bar {
+  width: 100%;
+  border-radius: 8px 8px 4px 4px;
+  transform-origin: bottom;
+  animation: growBar .8s cubic-bezier(.22,1,.36,1) backwards;
+  min-height: 6px;
+}
+.compare-bar.current {
+  background: var(--accent-grad);
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+.compare-bar.previous {
+  background: rgba(122,131,153,.22);
+}
+.compare-label {
+  position: absolute;
+  bottom: -26px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--dim);
+  font-weight: 500;
+}
+.compare-bar-value {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11.5px;
+  color: var(--text-strong);
+  white-space: nowrap;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--dim);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+.legend-dot.current { background: var(--accent-grad); }
+.legend-dot.previous { background: rgba(122,131,153,.4); }
+
+/* 对比明细 */
+.compare-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.compare-row:last-child { border-bottom: none; padding-bottom: 0; }
+.compare-row:first-child { padding-top: 0; }
+.compare-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.compare-main { flex: 1; min-width: 0; }
+.compare-main strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-bottom: 3px;
+}
+.compare-main .sub {
+  font-size: 11.5px;
+  color: var(--dim);
+}
+.compare-values {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.compare-val {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.compare-val .lbl {
+  font-size: 10.5px;
+  color: var(--dim);
+}
+.compare-val .num {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+.compare-delta {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.compare-delta.up {
+  color: var(--green);
+  background: var(--green-soft);
+}
+.compare-delta.down {
+  color: var(--red);
+  background: var(--red-soft);
+}
+.compare-delta.flat {
+  color: var(--dim);
+  background: rgba(122,131,153,.1);
+}
+
+/* ============================================================
+   资金明细列表
+   ============================================================ */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--bg-soft);
+  border: 1px solid transparent;
+  margin-bottom: 16px;
+  transition: all .2s;
+}
+.search-bar:focus-within {
+  background: var(--card);
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.search-bar svg { color: var(--dim); flex-shrink: 0; }
+.search-bar input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 14px;
+}
+.search-bar input::placeholder { color: var(--dimmer); }
+
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.filter-tab {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--dim);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: all .18s;
+  user-select: none;
+  white-space: nowrap;
+}
+.filter-tab:hover {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+.filter-tab.active {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.fund-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fund-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--border);
+  transition: background .15s;
+}
+.fund-item:last-child { border-bottom: none; }
+.fund-item:hover { background: var(--bg-soft); padding-left: 12px; padding-right: 12px; border-radius: 10px; }
+.fund-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.fund-avatar.in {
+  color: var(--green);
+  background: var(--green-soft);
+  border: 1px solid rgba(47,169,110,.2);
+}
+.fund-avatar.out {
+  color: var(--red);
+  background: var(--red-soft);
+  border: 1px solid rgba(224,90,90,.2);
+}
+.fund-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.fund-info .title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fund-info .meta {
+  font-size: 12px;
+  color: var(--dim);
+}
+.fund-amount {
+  font-size: 14.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.fund-amount.in { color: var(--green); }
+.fund-amount.out { color: var(--text); }
+.fund-more {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--dimmer);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all .18s;
+  flex-shrink: 0;
+}
+.fund-more:hover {
+  background: var(--bg-soft);
+  color: var(--accent);
+}
+
+/* 最近动态 */
+.activity {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.activity-item {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-item:first-child { padding-top: 0; }
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+.activity-content .text {
+  font-size: 13.5px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.activity-content .time {
+  font-size: 11.5px;
+  color: var(--dim);
+}
+
+/* 空状态 */
+.empty-tip {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--dimmer);
+  font-size: 13.5px;
+  line-height: 1.8;
+}
+.empty-tip svg {
+  opacity: .4;
+  margin-bottom: 12px;
+}
+
+/* ============================================================
+   移动端底部 Tab
+   ============================================================ */
+.tab-bar {
+  display: none;
+  flex-shrink: 0;
+  height: calc(64px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  z-index: 50;
+}
+.tab-items {
+  display: flex;
+  height: 64px;
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--dim);
+  font-size: 10.5px;
+  cursor: pointer;
+  position: relative;
+  transition: color .18s;
+}
+.tab-item svg {
+  width: 22px;
+  height: 22px;
+  transition: transform .2s;
+}
+.tab-item.active { color: var(--accent); }
+.tab-item.active svg { transform: scale(1.08); }
+.tab-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--accent);
+}
+
+/* ============================================================
+   弹窗（简版）
+   ============================================================ */
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,20,35,.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .22s, visibility .22s;
+  z-index: 300;
+}
+.modal-mask.show {
+  opacity: 1;
+  visibility: visible;
+}
+.modal {
+  width: 100%;
+  max-width: 400px;
+  background: var(--card);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(12px) scale(.98);
+  transition: transform .25s cubic-bezier(.22,1,.36,1);
+}
+.modal-mask.show .modal { transform: translateY(0) scale(1); }
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.modal-head h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-strong);
+  font-family: "Songti SC", serif;
+  letter-spacing: .04em;
+}
+.modal-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: none;
+  background: var(--bg-soft);
+  color: var(--dim);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: .18s;
+}
+.modal-close:hover { color: var(--accent); background: var(--accent-soft); }
+.modal-field { margin-bottom: 14px; }
+.modal-field label {
+  display: block;
+  font-size: 12.5px;
+  color: var(--dim);
+  margin-bottom: 7px;
+  letter-spacing: .03em;
+}
+.modal-field input {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  font-size: 15px;
+  color: var(--text-strong);
+  background: var(--bg-soft);
+  border: 1px solid transparent;
+  border-radius: 11px;
+  outline: none;
+  transition: all .2s;
+}
+.modal-field input:focus {
+  background: var(--card);
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+.btn {
+  flex: 1;
+  height: 46px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  cursor: pointer;
+  border: none;
+  transition: all .18s;
+}
+.btn-ghost {
+  background: var(--bg-soft);
+  color: var(--dim);
+}
+.btn-ghost:hover { background: var(--border); color: var(--text); }
+.btn-primary {
+  background: var(--accent-grad);
+  color: #fff;
+  box-shadow: 0 6px 18px var(--accent-glow);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px var(--accent-glow);
+}
+.btn-primary:active { transform: translateY(0); }
+
+/* 资金操作弹窗 - 大按钮 */
+.fund-action-btn {
+  width: 100%;
+  height: 56px;
+  border-radius: 14px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  letter-spacing: .04em;
+}
+.fund-action-btn.edit {
+  background: var(--accent-grad);
+  color: #fff;
+  box-shadow: 0 6px 20px var(--accent-glow);
+}
+.fund-action-btn.edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px var(--accent-glow);
+}
+.fund-action-btn.delete {
+  background: var(--red-soft);
+  color: var(--red);
+  border: 1px solid rgba(224,90,90,.25);
+}
+.fund-action-btn.delete:hover {
+  background: rgba(224,90,90,.18);
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+   响应式
+   ============================================================ */
+@media (max-width: 900px) {
+  .topnav { display: none; }
+  .mobile-topbar { display: flex; }
+  .tab-bar { display: block; }
+  .content {
+    padding: 16px;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+  .card { padding: 18px; border-radius: 14px; }
+  .card + .card { margin-top: 14px; }
+  .countdown-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .countdown-card { padding: 16px; }
+  .countdown-card .cd-date { font-size: 22px; }
+  .fund-overview {
+    grid-template-columns: 1fr;
+    padding: 0;
+  }
+  .fund-cell {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 18px;
+  }
+  .fund-cell:last-child { border-bottom: none; }
+  .fund-cell .val { font-size: 20px; }
+  .budget-value { font-size: 16px; }
+  .budget-percent { font-size: 22px; }
+  .compare-chart { gap: 18px; height: 180px; padding: 0 4px 28px; }
+  .compare-values { gap: 12px; }
+  .compare-val .num { font-size: 12.5px; }
+  .compare-delta { font-size: 11px; padding: 2px 8px; }
+  .period-tabs { width: 100%; }
+  .period-tab { flex: 1; text-align: center; padding: 8px 4px; }
+  .card-grid { grid-template-columns: 1fr; gap: 14px; }
+}
+
+@media (max-width: 400px) {
+  .countdown-grid { gap: 10px; }
+  .countdown-card { padding: 14px; }
+  .countdown-card .cd-date { font-size: 20px; }
+  .compare-values { gap: 8px; }
+  .compare-val .lbl { font-size: 9.5px; }
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(100px + env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(20px);
+  padding: 12px 22px;
+  border-radius: 12px;
+  background: var(--text-strong);
+  color: #fff;
+  font-size: 13px;
+  letter-spacing: .03em;
+  opacity: 0;
+  visibility: hidden;
+  transition: all .25s;
+  z-index: 400;
+  box-shadow: var(--shadow-lg);
+  max-width: 84vw;
+  text-align: center;
+}
+.toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ==================== 顶部导航（桌面端） ==================== -->
+  <nav class="topnav">
+    <div class="topnav-logo">
+      <div class="logo-mark">聚</div>
+      <div class="logo-text">
+        <b>聚神阁</b>
+        <span>JU SHEN GE</span>
+      </div>
+    </div>
+
+    <div class="topnav-items" id="topnavItems">
+      <div class="topnav-item active" data-page="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 10.2 12 3l9 7.2V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+        </svg>
+        首页
+      </div>
+      <div class="topnav-item" data-page="stats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3.5 20.5h17"/>
+          <rect x="5" y="12" width="3.4" height="6.5" rx="1.2"/>
+          <rect x="10.3" y="7.5" width="3.4" height="11" rx="1.2"/>
+          <rect x="15.6" y="3.5" width="3.4" height="15" rx="1.2"/>
+        </svg>
+        统计
+      </div>
+      <div class="topnav-item" data-page="funds">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="8.5"/>
+          <path d="M12 7.5v9M14.6 9.8a2.7 2.7 0 0 0-2.6-1.6c-1.5 0-2.6.9-2.6 2.1 0 1.3 1.1 1.9 2.6 2.2 1.7.4 2.8 1 2.8 2.3 0 1.2-1.2 2.1-2.8 2.1a2.9 2.9 0 0 1-2.8-1.7"/>
+        </svg>
+        资金
+      </div>
+      <div class="topnav-item" data-page="report">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="3.5" width="16" height="17" rx="2.5"/>
+          <path d="M8 8h8M8 12h8M8 16h5"/>
+        </svg>
+        报表
+      </div>
+      <div class="topnav-item" data-page="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 7h9M19 7h1M4 17h2M12 17h8"/>
+          <circle cx="16" cy="7" r="2.4"/>
+          <circle cx="9" cy="17" r="2.4"/>
+        </svg>
+        设置
+      </div>
+      <div class="topnav-item" data-page="data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="6" rx="8" ry="3"/>
+          <path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6"/>
+          <path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/>
+        </svg>
+        数据
+      </div>
+    </div>
+
+    <div class="topnav-right">
+      <div class="topnav-avatar" id="topnavAvatar">管</div>
+    </div>
+  </nav>
+
+  <!-- ==================== 移动端顶栏 ==================== -->
+  <header class="mobile-topbar">
+    <div class="mobile-title" id="mobileTitle">首页概览</div>
+    <div class="spacer"></div>
+    <div class="topnav-avatar" id="mobileAvatar">管</div>
+  </header>
+
+  <!-- ==================== 内容区 ==================== -->
+  <main class="content" id="content">
+
+    <!-- ========== 首页 ========== -->
+    <section class="page active" data-page="home">
+      <div class="countdown-grid" id="countdownGrid"></div>
+
+      <div style="margin-top: 20px">
+        <div class="budget-card" id="budgetCard"></div>
+      </div>
+
+      <div class="card" style="margin-top: 20px">
+        <div class="card-head">
+          <h3>最近动态</h3>
+          <span class="count">实时操作日志</span>
+        </div>
+        <div class="activity" id="homeActivity"></div>
+      </div>
+    </section>
+
+    <!-- ========== 数据统计 ========== -->
+    <section class="page" data-page="stats">
+      <div class="card">
+        <div class="period-tabs" id="periodTabs">
+          <div class="period-tab active" data-period="today">今日</div>
+          <div class="period-tab" data-period="week">本周</div>
+          <div class="period-tab" data-period="month">本月</div>
+          <div class="period-tab" data-period="year">本年</div>
+        </div>
+        <div class="period-label" id="periodLabel">今日 vs 昨日</div>
+        <div class="compare-chart" id="compareChart"></div>
+        <div class="chart-legend">
+          <span class="legend-item">
+            <span class="legend-dot current"></span>当前
+          </span>
+          <span class="legend-item">
+            <span class="legend-dot previous"></span>对比
+          </span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>对比数据明细</h3>
+          <span class="count" id="compareLabel">今日与昨日对比</span>
+        </div>
+        <div id="compareList"></div>
+      </div>
+    </section>
+
+    <!-- ========== 资金管理 ========== -->
+    <section class="page" data-page="funds">
+      <div class="fund-overview">
+        <div class="fund-cell clickable" id="totalDepositCell">
+          <span class="lbl">总存款</span>
+          <div class="val blue" id="totalDepositValue">¥ 0</div>
+          <span class="sub" id="totalDepositSub">点击修改</span>
+          <span class="edit-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>
+            </svg>
+          </span>
+        </div>
+        <div class="fund-cell">
+          <span class="lbl">今日消费</span>
+          <div class="val" id="todayExpense">¥ 0</div>
+          <span class="sub" id="todayExpenseSub">较昨日 —</span>
+        </div>
+        <div class="fund-cell">
+          <span class="lbl">今日收入</span>
+          <div class="val green" id="todayIncome">¥ 0</div>
+          <span class="sub" id="todayIncomeSub">较昨日 —</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 20px">
+        <div class="card-head">
+          <h3>余额趋势</h3>
+          <span class="count">近 7 天</span>
+        </div>
+        <div class="trend-chart" id="trendChart"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>资金明细</h3>
+          <span class="count">共 <span id="fundCount">0</span> 条</span>
+        </div>
+
+        <div class="search-bar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21l-4.3-4.3"/>
+          </svg>
+          <input type="text" id="fundSearch" placeholder="搜索标题或备注...">
+        </div>
+
+        <div class="filter-tabs" id="fundFilters">
+          <div class="filter-tab active" data-filter="all">全部</div>
+          <div class="filter-tab" data-filter="in">收入</div>
+          <div class="filter-tab" data-filter="out">支出</div>
+        </div>
+
+        <div class="fund-list" id="fundList"></div>
+      </div>
+    </section>
+
+    <!-- ========== 报表 ========== -->
+    <section class="page" data-page="report">
+      <div class="card">
+        <div class="card-head">
+          <h3>报表生成</h3>
+        </div>
+        <div class="empty-tip">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 3v5h5"/>
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+          </svg>
+          <div>报表功能即将上线</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 设置 ========== -->
+    <section class="page" data-page="settings">
+      <div class="card">
+        <div class="card-head"><h3>通用设置</h3></div>
+        <div class="empty-tip">
+          <div>设置功能即将上线</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 数据管理 ========== -->
+    <section class="page" data-page="data">
+      <div class="card">
+        <div class="card-head"><h3>数据管理</h3></div>
+        <div class="empty-tip">
+          <div>数据管理功能即将上线</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== 移动端底部 Tab ==================== -->
+  <nav class="tab-bar">
+    <div class="tab-items">
+      <div class="tab-item active" data-page="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 10.2 12 3l9 7.2V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+        </svg>
+        <span>首页</span>
+      </div>
+      <div class="tab-item" data-page="stats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3.5 20.5h17"/>
+          <rect x="5" y="12" width="3.4" height="6.5" rx="1.2"/>
+          <rect x="10.3" y="7.5" width="3.4" height="11" rx="1.2"/>
+          <rect x="15.6" y="3.5" width="3.4" height="15" rx="1.2"/>
+        </svg>
+        <span>统计</span>
+      </div>
+      <div class="tab-item" data-page="funds">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="8.5"/>
+          <path d="M12 7.5v9M14.6 9.8a2.7 2.7 0 0 0-2.6-1.6c-1.5 0-2.6.9-2.6 2.1 0 1.3 1.1 1.9 2.6 2.2 1.7.4 2.8 1 2.8 2.3 0 1.2-1.2 2.1-2.8 2.1a2.9 2.9 0 0 1-2.8-1.7"/>
+        </svg>
+        <span>资金</span>
+      </div>
+    </div>
+  </nav>
+
+</div>
+
+<!-- ==================== 弹窗：修改总存款 ==================== -->
+<div class="modal-mask" id="depositModal">
+  <div class="modal" style="max-width: 380px">
+    <div class="modal-head">
+      <h3>修改总存款</h3>
+      <button class="modal-close" data-close="depositModal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M6 6l12 12M18 6L6 18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-field">
+      <label>存款金额（元）</label>
+      <input type="number" id="depositInput" inputmode="numeric" placeholder="请输入金额">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close="depositModal">取消</button>
+      <button class="btn btn-primary" id="depositSaveBtn">更新</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 弹窗：资金记录操作 ==================== -->
+<div class="modal-mask" id="fundActionModal">
+  <div class="modal" style="max-width: 360px">
+    <div class="modal-head">
+      <h3>资金记录操作</h3>
+      <button class="modal-close" data-close="fundActionModal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M6 6l12 12M18 6L6 18"/>
+        </svg>
+      </button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <button class="fund-action-btn edit" id="fundEditBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>
+        </svg>
+        编辑记录
+      </button>
+      <button class="fund-action-btn delete" id="fundDeleteBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>
+        </svg>
+        删除记录
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   聚神阁 · 演示版 JavaScript
+   ============================================================ */
+
+(function () {
+  'use strict';
+
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
+
+  /* ============================================================
+     演示数据
+     ============================================================ */
+  const DEMO_DATA = {
+    baseDeposit: 200000,
+    fundRecords: [
+      // 今日
+      { id: 1, type: 'in',  title: '项目回款',     desc: '来自 · 华宇集团',   amount: 86000, time: todayAt(10, 22) },
+      { id: 2, type: 'out', title: '服务器采购',   desc: '来自 · 运维部',     amount: 12400, time: todayAt(9, 15) },
+      { id: 3, type: 'in',  title: '会员续费',     desc: '来自 · 陈思远',     amount: 2999,  time: todayAt(16, 40) },
+      { id: 4, type: 'out', title: '团队活动经费', desc: '来自 · 行政部',     amount: 5800,  time: todayAt(14, 5) },
+      // 昨天
+      { id: 5, type: 'in',  title: '广告合作',     desc: '来自 · 星辰传媒',   amount: 36000, time: yesterdayAt(11, 30) },
+      { id: 6, type: 'out', title: '办公设备租赁', desc: '来自 · 行政部',     amount: 2400,  time: yesterdayAt(10, 10) },
+      { id: 7, type: 'in',  title: '课程分销收入', desc: '来自 · 周雨桐',     amount: 8800,  time: yesterdayAt(17, 25) },
+      { id: 8, type: 'out', title: '下午茶报销',   desc: '来自 · 综合部',     amount: 360,   time: yesterdayAt(15, 50) },
+      // 本周早些
+      { id: 9, type: 'out', title: '云服务续费',   desc: '来自 · 技术部',     amount: 3200,  time: daysAgoAt(2, 11, 0) },
+      { id: 10, type: 'in', title: '技术咨询费',   desc: '来自 · 王浩然',     amount: 15000, time: daysAgoAt(3, 14, 30) },
+      { id: 11, type: 'out', title: '员工聚餐',     desc: '来自 · 综合部',     amount: 1850,  time: daysAgoAt(4, 19, 0) },
+      { id: 12, type: 'in', title: '渠道分成',     desc: '来自 · 刘一鸣',     amount: 6200,  time: daysAgoAt(5, 10, 0) },
+    ],
+    countdowns: [
+      { id: 1, title: '项目结项日', date: dateAfter(88),  note: '重要节点' },
+      { id: 2, title: '年终总结',   date: dateAfter(73),  note: '提交报告' },
+      { id: 3, title: '年会',       date: dateAfter(95),  note: '筹备中' },
+      { id: 4, title: '团建',       date: dateAfter(120), note: '户外活动' },
+    ],
+    actionLogs: [
+      { time: todayAt(16, 40), text: '新增收入：会员续费 ¥2,999' },
+      { time: todayAt(14, 5),  text: '新增支出：团队活动经费 ¥5,800' },
+      { time: todayAt(10, 22), text: '新增收入：项目回款 ¥86,000' },
+      { time: todayAt(9, 15),  text: '新增支出：服务器采购 ¥12,400' },
+      { time: yesterdayAt(17, 25), text: '新增收入：课程分销收入 ¥8,800' },
+    ],
+    monthlyBudget: 50000,
+  };
+
+  /* 时间助手 */
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function fmt(d) {
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+           pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+  function todayAt(h, m) {
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    return fmt(d);
+  }
+  function yesterdayAt(h, m) {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    d.setHours(h, m, 0, 0);
+    return fmt(d);
+  }
+  function daysAgoAt(n, h, m) {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    d.setHours(h, m, 0, 0);
+    return fmt(d);
+  }
+  function dateAfter(days) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+
+  /* ============================================================
+     全局状态
+     ============================================================ */
+  let state = {
+    baseDeposit: DEMO_DATA.baseDeposit,
+    fundRecords: [...DEMO_DATA.fundRecords],
+    countdowns: [...DEMO_DATA.countdowns],
+    actionLogs: [...DEMO_DATA.actionLogs],
+    monthlyBudget: DEMO_DATA.monthlyBudget,
+    statsPeriod: 'today',
+    fundFilter: 'all',
+    fundSearch: '',
+    editingFundIndex: -1,
+  };
+
+  /* ============================================================
+     工具
+     ============================================================ */
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function isToday(timeStr) {
+    const d = new Date(String(timeStr).replace(/-/g, '/'));
+    const t = new Date();
+    return d.getFullYear() === t.getFullYear() &&
+           d.getMonth() === t.getMonth() &&
+           d.getDate() === t.getDate();
+  }
+
+  function isYesterday(timeStr) {
+    const d = new Date(String(timeStr).replace(/-/g, '/'));
+    const t = new Date();
+    t.setDate(t.getDate() - 1);
+    return d.getFullYear() === t.getFullYear() &&
+           d.getMonth() === t.getMonth() &&
+           d.getDate() === t.getDate();
+  }
+
+  function toast(msg) {
+    const el = $('#toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 2200);
+  }
+
+  /* ============================================================
+     计算
+     ============================================================ */
+  function calcTotalDeposit() {
+    let balance = state.baseDeposit;
+    state.fundRecords.forEach(r => {
+      if (r.type === 'in') balance += Number(r.amount);
+      else balance -= Number(r.amount);
+    });
+    return Math.round(balance * 100) / 100;
+  }
+
+  function calcTodayExpense() {
+    return state.fundRecords
+      .filter(r => r.type === 'out' && isToday(r.time))
+      .reduce((s, r) => s + Number(r.amount), 0);
+  }
+
+  function calcTodayIncome() {
+    return state.fundRecords
+      .filter(r => r.type === 'in' && isToday(r.time))
+      .reduce((s, r) => s + Number(r.amount), 0);
+  }
+
+  function calcYesterdayExpense() {
+    return state.fundRecords
+      .filter(r => r.type === 'out' && isYesterday(r.time))
+      .reduce((s, r) => s + Number(r.amount), 0);
+  }
+
+  function calcYesterdayIncome() {
+    return state.fundRecords
+      .filter(r => r.type === 'in' && isYesterday(r.time))
+      .reduce((s, r) => s + Number(r.amount), 0);
+  }
+
+  function calcMonthExpense() {
+    const now = new Date();
+    return state.fundRecords
+      .filter(r => {
+        if (r.type !== 'out') return false;
+        const d = new Date(r.time.replace(/-/g, '/'));
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      })
+      .reduce((s, r) => s + Number(r.amount), 0);
+  }
+
+  function money(v) {
+    return '¥' + Number(v).toLocaleString('zh-CN');
+  }
+
+  /* ============================================================
+     渲染倒数日
+     ============================================================ */
+  function renderCountdowns() {
+    const grid = $('#countdownGrid');
+    if (!grid) return;
+
+    grid.innerHTML = state.countdowns.map(c => {
+      const target = new Date(c.date.replace(/-/g, '/'));
+      const now = new Date();
+      const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+      let remain = '', cls = '';
+      if (diff < 0) { remain = '已过期 ' + Math.abs(diff) + ' 天'; cls = 'expired'; }
+      else if (diff === 0) { remain = '今天'; cls = 'urgent'; }
+      else if (diff <= 3) { remain = '还剩 ' + diff + ' 天'; cls = 'urgent'; }
+      else { remain = '还剩 ' + diff + ' 天'; }
+
+      return `
+        <div class="countdown-card ${cls}">
+          <span class="cd-label">${escapeHtml(c.title)}</span>
+          <div class="cd-date">${c.date.slice(5).replace('-', '/')}</div>
+          <span class="cd-remain">${remain}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  /* ============================================================
+     渲染月度预算
+     ============================================================ */
+  function renderBudget() {
+    const card = $('#budgetCard');
+    if (!card) return;
+
+    const used = calcMonthExpense();
+    const budget = state.monthlyBudget;
+    const percent = budget ? Math.min(100, Math.round((used / budget) * 100)) : 0;
+    const barCls = percent >= 100 ? 'danger' : (percent >= 80 ? 'warn' : '');
+    const percentCls = percent >= 100 ? 'danger' : (percent >= 80 ? 'warn' : '');
+
+    const remain = budget ? Math.max(0, budget - used) : 0;
+    const hint = budget
+      ? (used >= budget
+          ? '⚠️ 已超支 ' + money(used - budget)
+          : '剩余 ' + money(remain) + ' 可用')
+      : '去系统设置里设置本月预算';
+
+    card.innerHTML = `
+      <div class="budget-head">
+        <div>
+          <div class="budget-label">月度预算</div>
+          <div class="budget-value">${money(used)}<span class="sep">/</span>${budget ? money(budget) : '未设置'}</div>
+        </div>
+        <div class="budget-percent ${percentCls}">${percent}%</div>
+      </div>
+      <div class="budget-bar">
+        <div class="budget-bar-inner ${barCls}" style="width: ${percent}%"></div>
+      </div>
+      <div class="budget-hint">
+        <span>${hint}</span>
+        <span>${new Date().getMonth() + 1} 月</span>
+      </div>
+    `;
+  }
+
+  /* ============================================================
+     渲染最近动态
+     ============================================================ */
+  function renderHomeActivity() {
+    const el = $('#homeActivity');
+    if (!el) return;
+
+    if (!state.actionLogs.length) {
+      el.innerHTML = '<div class="empty-tip">暂无动态</div>';
+      return;
+    }
+
+    el.innerHTML = state.actionLogs.slice(0, 6).map(log => `
+      <div class="activity-item">
+        <div class="activity-dot"></div>
+        <div class="activity-content">
+          <div class="text">${escapeHtml(log.text)}</div>
+          <div class="time">${log.time}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /* ============================================================
+     渲染资金概览
+     ============================================================ */
+  function renderFundOverview() {
+    const total = calcTotalDeposit();
+    const todayExpense = calcTodayExpense();
+    const todayIncome = calcTodayIncome();
+
+    $('#totalDepositValue').textContent = money(total);
+
+    $('#todayExpense').textContent = money(todayExpense);
+    const yesterdayExpense = calcYesterdayExpense();
+    const expDiff = todayExpense - yesterdayExpense;
+    let expText = '与昨日持平';
+    if (expDiff > 0) expText = '较昨日 ↑ ' + money(expDiff);
+    else if (expDiff < 0) expText = '较昨日 ↓ ' + money(Math.abs(expDiff));
+    $('#todayExpenseSub').textContent = expText;
+    $('#todayExpenseSub').style.color = expDiff > 0 ? 'var(--red)' : (expDiff < 0 ? 'var(--green)' : 'var(--dim)');
+
+    $('#todayIncome').textContent = money(todayIncome);
+    const yesterdayIncome = calcYesterdayIncome();
+    const incDiff = todayIncome - yesterdayIncome;
+    let incText = '与昨日持平';
+    if (incDiff > 0) incText = '较昨日 ↑ ' + money(incDiff);
+    else if (incDiff < 0) incText = '较昨日 ↓ ' + money(Math.abs(incDiff));
+    $('#todayIncomeSub').textContent = incText;
+    $('#todayIncomeSub').style.color = incDiff > 0 ? 'var(--green)' : (incDiff < 0 ? 'var(--red)' : 'var(--dim)');
+  }
+
+  /* ============================================================
+     渲染余额趋势
+     ============================================================ */
+  function renderTrendChart() {
+    const chart = $('#trendChart');
+    if (!chart) return;
+
+    const days = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      days.push({
+        date: d,
+        label: (d.getMonth() + 1) + '/' + d.getDate(),
+        balance: state.baseDeposit,
+      });
+    }
+
+    const sorted = state.fundRecords.slice().sort((a, b) =>
+      new Date(a.time.replace(/-/g, '/')) - new Date(b.time.replace(/-/g, '/'))
+    );
+
+    days.forEach(day => {
+      const endOfDay = new Date(day.date);
+      endOfDay.setHours(23, 59, 59, 999);
+      let balance = state.baseDeposit;
+      sorted.forEach(r => {
+        const t = new Date(r.time.replace(/-/g, '/'));
+        if (t <= endOfDay) {
+          if (r.type === 'in') balance += Number(r.amount);
+          else balance -= Number(r.amount);
+        }
+      });
+      day.balance = balance;
+    });
+
+    const maxBal = Math.max.apply(null, days.map(d => d.balance));
+    const minBal = Math.min.apply(null, days.map(d => d.balance));
+    const range = (maxBal - minBal) || 1;
+
+    chart.innerHTML = days.map(d => {
+      const pct = 18 + ((d.balance - minBal) / range) * 70;
+      return `
+        <div class="trend-col">
+          <span class="trend-val">${(d.balance / 10000).toFixed(1)}w</span>
+          <div class="trend-bar" style="height: ${pct}%"></div>
+          <span class="trend-label">${d.label}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  /* ============================================================
+     渲染资金明细
+     ============================================================ */
+  function renderFundList() {
+    const el = $('#fundList');
+    if (!el) return;
+
+    let list = state.fundRecords.slice();
+
+    if (state.fundFilter !== 'all') {
+      list = list.filter(r => r.type === state.fundFilter);
+    }
+
+    if (state.fundSearch) {
+      const t = state.fundSearch.toLowerCase();
+      list = list.filter(r =>
+        r.title.toLowerCase().indexOf(t) >= 0 ||
+        r.desc.toLowerCase().indexOf(t) >= 0
+      );
+    }
+
+    if (!list.length) {
+      el.innerHTML = '<div class="empty-tip">' +
+        (state.fundRecords.length === 0 ? '暂无资金记录' : '没有匹配的记录') +
+        '</div>';
+      return;
+    }
+
+    el.innerHTML = list.map(item => {
+      const origIdx = state.fundRecords.indexOf(item);
+      const isIn = item.type === 'in';
+      return `
+        <div class="fund-item">
+          <div class="fund-avatar ${isIn ? 'in' : 'out'}">${isIn ? '入' : '出'}</div>
+          <div class="fund-info">
+            <div class="title">${escapeHtml(item.title)}</div>
+            <div class="meta">${escapeHtml(item.desc)} · ${item.time}</div>
+          </div>
+          <div class="fund-amount ${isIn ? 'in' : 'out'}">${isIn ? '+' : '-'} ${money(item.amount)}</div>
+          <button class="fund-more" data-fund-idx="${origIdx}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="5" r="1.5"/>
+              <circle cx="12" cy="12" r="1.5"/>
+              <circle cx="12" cy="19" r="1.5"/>
+            </svg>
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    $('#fundCount').textContent = state.fundRecords.length;
+  }
+
+  /* ============================================================
+     数据统计
+     ============================================================ */
+  function getPeriodRange(period) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let currentStart = new Date(today);
+    let currentEnd = new Date(today);
+    let prevStart = new Date(today);
+    let prevEnd = new Date(today);
+
+    if (period === 'today') {
+      prevStart.setDate(today.getDate() - 1);
+      prevEnd = new Date(prevStart);
+    } else if (period === 'week') {
+      const dow = today.getDay() || 7;
+      currentStart.setDate(today.getDate() - dow + 1);
+      currentEnd = new Date(currentStart);
+      currentEnd.setDate(currentStart.getDate() + 6);
+      prevStart = new Date(currentStart);
+      prevStart.setDate(currentStart.getDate() - 7);
+      prevEnd = new Date(prevStart);
+      prevEnd.setDate(prevStart.getDate() + 6);
+    } else if (period === 'month') {
+      currentStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      currentEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      prevStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      prevEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+    } else if (period === 'year') {
+      currentStart = new Date(today.getFullYear(), 0, 1);
+      currentEnd = new Date(today.getFullYear(), 11, 31);
+      prevStart = new Date(today.getFullYear() - 1, 0, 1);
+      prevEnd = new Date(today.getFullYear() - 1, 11, 31);
+    }
+
+    return { currentStart, currentEnd, prevStart, prevEnd };
+  }
+
+  function inRange(timeStr, start, end) {
+    const d = new Date(String(timeStr).replace(/-/g, '/'));
+    if (isNaN(d.getTime())) return false;
+    return d >= start && d <= end;
+  }
+
+  function getCompareData(period) {
+    const r = getPeriodRange(period);
+
+    const curExpense = state.fundRecords
+      .filter(x => x.type === 'out' && inRange(x.time, r.currentStart, r.currentEnd))
+      .reduce((s, x) => s + Number(x.amount), 0);
+
+    const prevExpense = state.fundRecords
+      .filter(x => x.type === 'out' && inRange(x.time, r.prevStart, r.prevEnd))
+      .reduce((s, x) => s + Number(x.amount), 0);
+
+    const curIncome = state.fundRecords
+      .filter(x => x.type === 'in' && inRange(x.time, r.currentStart, r.currentEnd))
+      .reduce((s, x) => s + Number(x.amount), 0);
+
+    const prevIncome = state.fundRecords
+      .filter(x => x.type === 'in' && inRange(x.time, r.prevStart, r.prevEnd))
+      .reduce((s, x) => s + Number(x.amount), 0);
+
+    return {
+      expense: { current: curExpense, previous: prevExpense },
+      income:  { current: curIncome,  previous: prevIncome },
+    };
+  }
+
+  function renderCompare() {
+    const data = getCompareData(state.statsPeriod);
+
+    const periodLabel = $('#periodLabel');
+    const labels = { today: '今日 vs 昨日', week: '本周 vs 上周', month: '本月 vs 上月', year: '本年 vs 去年' };
+    periodLabel.textContent = labels[state.statsPeriod] || '今日 vs 昨日';
+
+    const compareLabel = $('#compareLabel');
+    const labels2 = { today: '今日与昨日对比', week: '本周与上周对比', month: '本月与上月对比', year: '本年与去年对比' };
+    compareLabel.textContent = labels2[state.statsPeriod];
+
+    /* 柱状图 */
+    const chart = $('#compareChart');
+    const maxVal = Math.max(data.expense.current, data.expense.previous, data.income.current, data.income.previous, 1);
+
+    const groups = [
+      { label: '消费', cur: data.expense.current, prev: data.expense.previous },
+      { label: '收入', cur: data.income.current, prev: data.income.previous },
+    ];
+
+    chart.innerHTML = groups.map(g => {
+      const hc = Math.max(4, Math.round((g.cur / maxVal) * 100));
+      const hp = Math.max(4, Math.round((g.prev / maxVal) * 100));
+      return `
+        <div class="compare-group">
+          <div class="compare-bar-wrap">
+            <span class="compare-bar-value">${g.cur >= 10000 ? (g.cur / 10000).toFixed(1) + 'w' : g.cur}</span>
+            <div class="compare-bar current" style="height: ${hc}%"></div>
+          </div>
+          <div class="compare-bar-wrap">
+            <span class="compare-bar-value">${g.prev >= 10000 ? (g.prev / 10000).toFixed(1) + 'w' : g.prev}</span>
+            <div class="compare-bar previous" style="height: ${hp}%"></div>
+          </div>
+          <span class="compare-label">${g.label}</span>
+        </div>
+      `;
+    }).join('');
+
+    /* 对比明细 */
+    const rows = [
+      {
+        icon: '<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+        title: '消费',
+        cur: data.expense.current,
+        prev: data.expense.previous,
+        isMoney: true,
+      },
+      {
+        icon: '<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+        title: '收入',
+        cur: data.income.current,
+        prev: data.income.previous,
+        isMoney: true,
+      },
+    ];
+
+    const prevLabel = { today: '昨日', week: '上周', month: '上月', year: '去年' }[state.statsPeriod];
+    const curLabel = { today: '今日', week: '本周', month: '本月', year: '本年' }[state.statsPeriod];
+
+    $('#compareList').innerHTML = rows.map(r => {
+      const diff = r.cur - r.prev;
+      let cls = 'flat', sign = '—';
+      if (diff > 0) { cls = 'up'; sign = '↑'; }
+      else if (diff < 0) { cls = 'down'; sign = '↓'; }
+      const abs = Math.abs(diff);
+
+      return `
+        <div class="compare-row">
+          <div class="compare-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              ${r.icon}
+            </svg>
+          </div>
+          <div class="compare-main">
+            <strong>${r.title}</strong>
+            <span class="sub">较${prevLabel}</span>
+          </div>
+          <div class="compare-values">
+            <div class="compare-val">
+              <span class="lbl">${curLabel}</span>
+              <span class="num">${money(r.cur)}</span>
+            </div>
+            <div class="compare-val">
+              <span class="lbl">${prevLabel}</span>
+              <span class="num">${money(r.prev)}</span>
+            </div>
+            <span class="compare-delta ${cls}">${sign} ${money(abs)}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  /* ============================================================
+     弹窗控制
+     ============================================================ */
+  function openModal(id) {
+    const m = document.getElementById(id);
+    if (m) m.classList.add('show');
+  }
+  function closeModal(id) {
+    const m = document.getElementById(id);
+    if (m) m.classList.remove('show');
+  }
+
+  $$('.modal-mask').forEach(m => {
+    m.addEventListener('click', e => {
+      if (e.target === m) m.classList.remove('show');
+    });
+  });
+  $$('[data-close]').forEach(btn => {
+    btn.addEventListener('click', function () {
+      closeModal(this.dataset.close);
+    });
+  });
+
+  /* 修改总存款 */
+  $('#totalDepositCell').addEventListener('click', function () {
+    $('#depositInput').value = calcTotalDeposit();
+    openModal('depositModal');
+    setTimeout(() => $('#depositInput').focus(), 200);
+  });
+
+  $('#depositSaveBtn').addEventListener('click', function () {
+    const val = parseFloat($('#depositInput').value);
+    if (isNaN(val) || val < 0) { $('#depositInput').focus(); return; }
+
+    let delta = 0;
+    state.fundRecords.forEach(r => {
+      if (r.type === 'in') delta += Number(r.amount);
+      else delta -= Number(r.amount);
+    });
+    state.baseDeposit = Math.round((val - delta) * 100) / 100;
+
+    closeModal('depositModal');
+    renderAll();
+    toast('总存款已更新');
+  });
+
+  /* 资金记录操作 */
+  $('#fundList').addEventListener('click', function (e) {
+    const btn = e.target.closest('.fund-more');
+    if (!btn) return;
+    e.stopPropagation();
+    state.editingFundIndex = parseInt(btn.dataset.fundIdx, 10);
+    if (isNaN(state.editingFundIndex) || !state.fundRecords[state.editingFundIndex]) return;
+    openModal('fundActionModal');
+  });
+
+  $('#fundEditBtn').addEventListener('click', function () {
+    closeModal('fundActionModal');
+    toast('编辑功能即将上线（演示版）');
+  });
+
+  $('#fundDeleteBtn').addEventListener('click', function () {
+    const item = state.fundRecords[state.editingFundIndex];
+    if (!item) return;
+    closeModal('fundActionModal');
+    state.fundRecords.splice(state.editingFundIndex, 1);
+    state.actionLogs.unshift({
+      time: fmt(new Date()),
+      text: '删除资金记录：' + item.title,
+    });
+    renderAll();
+    toast('记录已删除');
+  });
+
+  /* ============================================================
+     页面切换
+     ============================================================ */
+  const PAGE_TITLES = {
+    home: '首页概览',
+    stats: '数据统计',
+    funds: '资金管理',
+    report: '报表管理',
+    settings: '系统设置',
+    data: '数据管理',
+  };
+
+  function setPage(key) {
+    $$('.page').forEach(p => p.classList.toggle('active', p.dataset.page === key));
+    $$('.topnav-item').forEach(n => n.classList.toggle('active', n.dataset.page === key));
+    $$('.tab-item').forEach(n => n.classList.toggle('active', n.dataset.page === key));
+
+    const mobileTitle = $('#mobileTitle');
+    if (mobileTitle) mobileTitle.textContent = PAGE_TITLES[key] || '聚神阁';
+
+    $('#content').scrollTop = 0;
+
+    if (key === 'stats') renderCompare();
+    if (key === 'funds') { renderFundOverview(); renderTrendChart(); renderFundList(); }
+    if (key === 'home') { renderCountdowns(); renderBudget(); renderHomeActivity(); }
+  }
+
+  $$('.topnav-item').forEach(item => {
+    item.addEventListener('click', function () {
+      setPage(this.dataset.page);
+    });
+  });
+  $$('.tab-item').forEach(item => {
+    item.addEventListener('click', function () {
+      setPage(this.dataset.page);
+    });
+  });
+
+  /* ============================================================
+     筛选
+     ============================================================ */
+  $$('#fundFilters .filter-tab').forEach(tab => {
+    tab.addEventListener('click', function () {
+      $$('#fundFilters .filter-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      state.fundFilter = this.dataset.filter;
+      renderFundList();
+    });
+  });
+
+  $('#fundSearch').addEventListener('input', function () {
+    state.fundSearch = this.value.trim();
+    renderFundList();
+  });
+
+  $$('#periodTabs .period-tab').forEach(tab => {
+    tab.addEventListener('click', function () {
+      $$('#periodTabs .period-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      state.statsPeriod = this.dataset.period;
+      renderCompare();
+    });
+  });
+
+  /* ============================================================
+     全局刷新
+     ============================================================ */
+  function renderAll() {
+    renderCountdowns();
+    renderBudget();
+    renderHomeActivity();
+    renderFundOverview();
+    renderTrendChart();
+    renderFundList();
+    renderCompare();
+  }
+
+  /* ============================================================
+     初始化
+     ============================================================ */
+  renderAll();
+
+})();
+</script>
+</body>
+</html>
