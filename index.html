@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#f5f7fb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>聚神阁</title>
+<style>
+/* ============================================================
+   聚神阁 · 极简明亮版
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f7fb;
+  --bg-soft: #eef2f9;
+  --text: #2a3142;
+  --text-strong: #0f1420;
+  --dim: #7a8399;
+  --dimmer: #b3bac9;
+  --card: #ffffff;
+  --border: rgba(15,20,35,.07);
+  --border-strong: rgba(15,20,35,.12);
+  --track: rgba(91,124,250,.14);
+  --accent: #5b7cfa;
+  --accent-h: #4263e8;
+  --accent-grad: linear-gradient(135deg, #7c93ff, #5b7cfa);
+  --accent-soft: rgba(91,124,250,.1);
+  --accent-border: rgba(91,124,250,.22);
+  --accent-glow: rgba(91,124,250,.28);
+  --green: #2fa96e;
+  --green-soft: rgba(47,169,110,.1);
+  --red: #e05a5a;
+  --red-soft: rgba(224,90,90,.1);
+  --amber: #e89a2c;
+  --radius: 16px;
+  --shadow-sm: 0 2px 8px rgba(15,20,35,.04);
+  --shadow-md: 0 4px 16px rgba(15,20,35,.06);
+  --shadow-lg: 0 12px 40px rgba(15,20,35,.12);
+}
+
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  background: var(--bg); color: var(--text);
+  -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; overflow: hidden;
+}
+button { font-family: inherit; cursor: pointer; }
+input, textarea, select { font-family: inherit; }
+.mono, .stat-value, .compare-val .num, .budget-value { font-variant-numeric: tabular-nums; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--dimmer); border-radius: 3px; }
+
+/* ============================================================
+   登录页
+   ============================================================ */
+.login-screen {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: radial-gradient(circle at 30% 20%, rgba(91,124,250,.15), transparent 45%), linear-gradient(180deg, #f5f7fb 0%, #eef2fb 100%);
+  z-index: 1000; transition: opacity .3s, visibility .3s;
+}
+.login-screen.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+.login-card {
+  width: 100%; max-width: 380px; padding: 40px 28px 32px; border-radius: 24px;
+  background: rgba(255,255,255,.7); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,.9);
+  box-shadow: 0 24px 60px rgba(15,20,35,.08); animation: rise .5s cubic-bezier(.22,1,.36,1);
+}
+@keyframes rise { from { opacity: 0; transform: translateY(20px) scale(.98); } }
+.login-brand { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 32px; }
+.login-title { font-size: 26px; font-weight: 700; letter-spacing: .2em; text-indent: .2em; color: var(--accent); font-family: "Songti SC", serif; }
+.login-sub { font-size: 12px; letter-spacing: .15em; color: var(--dim); }
+.field { position: relative; margin-bottom: 16px; }
+.field svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--dim); pointer-events: none; }
+.field input {
+  width: 100%; height: 52px; padding: 0 46px; font-size: 15px; color: var(--text-strong);
+  background: #ffffff; border: 1px solid var(--border-strong); border-radius: 14px; outline: none; transition: all .2s;
+}
+.field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.eye-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; display: grid; place-items: center; background: none; border: none; color: var(--dim); cursor: pointer; border-radius: 10px; }
+.login-error { font-size: 12.5px; color: var(--red); height: 0; opacity: 0; overflow: hidden; transition: all .2s; text-align: center; margin-bottom: 10px; }
+.login-error.show { height: 20px; opacity: 1; margin-bottom: 16px; }
+.btn-primary { width: 100%; height: 52px; margin-top: 8px; border: none; border-radius: 14px; font-size: 15px; font-weight: 600; color: #fff; background: var(--accent-grad); box-shadow: 0 8px 24px var(--accent-glow); transition: .2s; }
+.btn-primary:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.btn-primary:active { transform: scale(.98); }
+
+/* ============================================================
+   应用主体 & 导航
+   ============================================================ */
+.app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+
+.topnav { flex-shrink: 0; height: 60px; display: flex; align-items: center; gap: 6px; padding: 0 22px; background: rgba(255,255,255,.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); z-index: 50; }
+.topnav-logo { display: flex; align
