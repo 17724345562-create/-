@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- 重点：允许用户双指缩放（去掉了 user-scalable=no），适配刘海屏 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f8fafc">
+
+<!-- PWA 配置 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="聚神阁">
+<title>聚神阁 - 个人财务中心</title>
+<style>
+/* ================= 基础与变量 ================= */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg: #f5f5f5; 
+  --card: #ffffff; 
+  --text: #111111; 
+  --text-light: #737373; 
+  --main: #171717; 
+  --main-hover: #333333;
+  --green: #059669; 
+  --red: #dc2626; 
+  --line: #e5e5e5;
+  --radius: 16px; 
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  --sidebar-width: 190px;
+}
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg); color: var(--text);
+  height: 100vh; height: 100dvh;
+  overflow: hidden; display: flex; flex-direction: row;
+}
+button { font-family: inherit; border: none; outline: none; cursor: pointer; transition: .2s; background: transparent; color: inherit;}
+button:active { transform: scale(.98); }
+input, select { font-family: inherit; outline: none; border: none; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ================= 主框架 ================= */
+#appPage { display: flex; width: 100%; height: 100%; flex-direction: row; }
+
+/* 左侧侧边栏 */
+.sidebar {
+  width: var(--sidebar-width); flex-shrink: 0;
+  background: var(--card); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; z-index: 10;
+}
+.sidebar-logo {
+  height: 100px; display: flex; align-items: center; justify-content: center;
+  font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: 2px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.nav-list { padding: 16px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.nav-item {
+  padding: 12px 0; border-radius: 10px; color: var(--text-light); 
+  font-size: 16px; font-weight: 600; cursor: pointer; transition: .2s; 
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; width: 100%; flex-shrink: 0;
+}
+.nav-item span { letter-spacing: 2px; padding-left: 2px; }
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { background: var(--main); color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+
+/* 右侧主区域 */
+.main-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.top-header {
+  height: 72px; background: var(--card); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 0 32px; flex-shrink: 0;
+}
+.btn-icon {
+  width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--bg); color: var(--text-light); font-size: 16px; cursor: pointer; border: none; transition: .2s;
+}
+.btn-icon:hover { background: var(--line); color: var(--text); }
+
+.content-area { flex: 1; overflow-y: auto; padding: 32px 40px; }
+.page { display: none; max-width: 1200px; margin: 0 auto; width: 100%; animation: fade .3s; }
+.page.active { display: block; }
+@keyframes fade { from { opacity: 0; transform: translateY(10px); } }
+
+/* ================= 通用组件 ================= */
+.card { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 24px; border: 1px solid var(--line); }
+.card-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
+.empty-tip { text-align: center; padding: 40px 0; font-size: 14px; color: var(--text-light); }
+
+/* ================= 首页 ================= */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
+.stat-box { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--line); transition: .2s; }
+.stat-box.clickable { cursor: pointer; }
+.stat-title { font-size: 14px; color: var(--text-light); font-weight: 600; margin-bottom: 8px; }
+.stat-value { font-size: 32px; font-weight: 800; color: var(--text); letter-spacing: -.5px;}
+.stat-value.blue { color: var(--text); } 
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+.stat-sub { font-size: 13px; color: var(--text-light); margin-top: 12px; font-weight: 500;}
+
+.middle-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; margin-bottom: 20px; }
+.bar-bg { height: 12px; background: var(--bg); border-radius: 6px; overflow: hidden; margin: 16px 0; border: 1px solid var(--line); }
+.bar-in { height: 100%; background: var(--text); border-radius: 6px; transition: width .4s ease-out; }
+.quick-actions { display: flex; gap: 16px; height: 100%; align-items: center; }
+.quick-btn { flex: 1; height: 100%; min-height: 80px; background: var(--bg); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text); font-weight: 600; border: 1px dashed var(--line); transition: .2s;}
+.quick-btn:hover { background: var(--card); border-color: var(--text); border-style: solid; box-shadow: var(--shadow); }
+
+.bottom-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.bottom-grid .card { min-height: 250px; margin-bottom: 0; }
+
+/* 流水列表 */
+.fund-item { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--line); transition: .2s;}
+.fund-item:last-child { border: none; padding-bottom: 0; }
+.fund-item:first-child { padding-top: 0; }
+.fund-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin-right: 16px; flex-shrink: 0; }
+.fund-icon.in { background: rgba(5,150,105,.1); color: var(--green); }
+.fund-icon.out { background: rgba(220,38,38,.1); color: var(--red); }
+.fund-info { flex: 1; overflow: hidden; }
+.fund-name { font-size: 15px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.fund-time { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+.fund-amt { font-size: 16px; font-weight: 700; white-space: nowrap;}
+.fund-amt.in { color: var(--green); }
+.fund-amt.out { color: var(--red); }
+.fund-del { background: #fef2f2; color: var(--red); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; margin-left: 16px; opacity: 0; transition: .2s;}
+.fund-item:hover .fund-del { opacity: 1; }
+
+.cd-card { background: var(--bg); border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid transparent; transition: .2s; }
+.cd-card:last-child { margin-bottom: 0; }
+.cd-card:hover { border-color: var(--text-light); background: var(--card); box-shadow: var(--shadow); }
+.cd-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.cd-date { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+.cd-days { font-size: 16px; font-weight: 800; color: var(--text); }
+.cd-days.expired { color: var(--red); }
+
+/* ================= 统计 ================= */
+.tabs { display: flex; background: var(--bg); padding: 4px; border-radius: 10px; margin-bottom: 24px; border: 1px solid var(--line); }
+.tab-btn { flex: 1; text-align: center; padding: 10px 0; font-size: 14px; color: var(--text-light); border-radius: 8px; cursor: pointer; font-weight: 600; transition: .2s; }
+.tab-btn.active { background: var(--card); color: var(--text); font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+.chart-box { display: flex; justify-content: space-around; height: 280px; align-items: flex-end; padding-bottom: 24px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+.chart-col { display: flex; flex-direction: column; align-items: center; width: 20%; height: 100%; justify-content: flex-end; }
+.chart-bar { width: 44px; background: var(--main); border-radius: 6px 6px 0 0; min-height: 4px; transition: height .3s; position: relative; }
+.chart-bar.prev { background: #d4d4d4; }
+.chart-val { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 700; color: var(--text-light); }
+.chart-name { margin-top: 12px; font-size: 13px; color: var(--text-light); font-weight: 600; white-space: nowrap;}
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 15px; font-weight: 600; }
+.stat-row:last-child { border: none; }
+.stat-val { font-weight: 800; color: var(--text); font-size: 18px; }
+.stat-diff { font-size: 13px; padding: 4px 10px; border-radius: 6px; background: var(--bg); color: var(--text-light); font-weight: 700; }
+.stat-diff.up { background: rgba(5,150,105,.1); color: var(--green); }
+.stat-diff.down { background: rgba(220,38,38,.1); color: var(--red); }
+
+/* ================= 资金页 ================= */
+.funds-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
+.fund-stat { background: var(--card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--line); display: flex; flex-direction: column; transition: .2s;}
+.fund-stat.clickable { cursor: pointer; }
+.fund-stat-title { font-size: 14px; color: var(--text-light); font-weight: 600; margin-bottom: 8px;}
+.fund-stat-val { font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -0.5px;}
+
+.funds-action-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
+.big-add-card { display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--card); border: 1px dashed var(--line); border-radius: var(--radius); cursor: pointer; transition: .2s; min-height: 140px; box-shadow: var(--shadow);}
+.big-add-card:hover { border-color: var(--text); background: var(--bg); }
+.big-add-card svg { width: 32px; height: 32px; margin-bottom: 12px; color: var(--text); }
+.big-add-card span { font-size: 16px; font-weight: 700; color: var(--text); }
+
+.fund-list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.fund-list-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.fund-count { font-size: 13px; color: var(--text-light); font-weight: 500; background: var(--bg); padding: 4px 10px; border-radius: 20px;}
+
+/* ================= 账户 / 借贷 / 目标 / 报表 / 数据 / 设置 ================= */
+.account-item { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--line); }
+.account-item:last-child { border: none; }
+.account-info { display: flex; align-items: center; gap: 16px; }
+.account-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; background: var(--bg); border: 1px solid var(--line); }
+.account-name { font-size: 16px; font-weight: 600; color: var(--text); }
+.account-type { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+.account-balance { font-size: 20px; font-weight: 800; color: var(--text); }
+
+.set-row { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--line); }
+.set-row:last-child { border: none; }
+.set-info { font-size: 15px; font-weight: 600; }
+.set-desc { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+.set-btn { background: var(--bg); color: var(--text); padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 700; border: 1px solid var(--line);}
+.set-btn:hover { background: var(--main); color: #fff; border-color: var(--main); }
+.btn-danger { background: #fef2f2; color: var(--red); border-color: #fecaca; }
+.btn-danger:hover { background: var(--red); color: #fff; border-color: var(--red); }
+
+.report-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 15px; font-weight: 600; }
+.report-row:last-child { border: none; }
+.report-select { background: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: 14px; color: var(--text); font-weight: 600; cursor: pointer; border: 1px solid var(--line);}
+.btn-primary { width: 100%; height: 50px; background: var(--main); color: #fff; border-radius: 12px; font-size: 16px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,.15); margin-top: 24px;}
+.btn-primary:hover { background: var(--main-hover); }
+
+/* ================= 弹窗 ================= */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px;}
+.modal-bg.show { display: flex; }
+.modal-box { width: 100%; max-width: 380px; background: var(--card); border-radius: 20px; padding: 32px; box-shadow: 0 20px 40px rgba(0,0,0,.2); animation: pop .2s; display: flex; flex-direction: column; align-items: center; max-height: 90vh; overflow-y: auto;}
+@keyframes pop { from { transform: scale(.95); opacity: 0; } }
+.modal-title { font-size: 20px; font-weight: 800; margin-bottom: 24px; color: var(--text); }
+.modal-input { width: 100%; height: 50px; background: var(--bg); border-radius: 12px; padding: 0 16px; font-size: 15px; margin-bottom: 16px; border: 1px solid var(--line); text-align: center; transition: .2s; color: var(--text); font-weight: 600; }
+.modal-input:focus { border-color: var(--text); background: var(--card); box-shadow: 0 0 0 3px rgba(0,0,0,.05); }
+.type-switch { width: 100%; display: flex; background: var(--bg); border-radius: 12px; padding: 4px; margin-bottom: 16px; border: 1px solid var(--line);}
+.type-opt { flex: 1; text-align: center; padding: 10px 0; font-size: 15px; color: var(--text-light); border-radius: 8px; cursor: pointer; font-weight: 600; }
+.type-opt.active { background: var(--card); color: var(--text); font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+.modal-btns { width: 100%; display: flex; gap: 12px; margin-top: 8px; }
+.btn-cancel { flex: 1; height: 50px; border-radius: 12px; background: var(--bg); color: var(--text-light); font-size: 15px; font-weight: 700; border: 1px solid var(--line);}
+.btn-cancel:hover { background: var(--line); color: var(--text); }
+.btn-save { flex: 1; height: 50px; border-radius: 12px; background: var(--main); color: #fff; font-size: 15px; font-weight: 700; }
+.btn-save:hover { background: var(--main-hover); }
+.toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,.8); color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; opacity: 0; transition: .3s; pointer-events: none; z-index: 3000; text-align: center; max-width: 80%;}
+.toast.show { opacity: 1; }
+
+/* ================= 手机横屏专属适配：等比缩小，保持电脑端结构 ================= */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* 1. 整体界面按比例缩小，不改变排版结构 */
+  body { font-size: 12px; }
+  
+  /* 侧边栏缩小 */
+  :root { --sidebar-width: 140px; }
+  .sidebar-logo { height: 50px; font-size: 18px; letter-spacing: 1px; }
+  .nav-list { padding: 8px; gap: 4px; }
+  .nav-item { padding: 8px 0; font-size: 13px; }
+  .nav-item svg { width: 16px; height: 16px; }
+  .nav-item span { letter-spacing: 1px; padding-left: 0; }
+
+  /* 顶部栏缩短 */
+  .top-header { height: 44px; padding: 0 20px; gap: 12px; }
+  .btn-icon { width: 30px; height: 30px; font-size: 14px;}
+  .content-area { padding: 16px 20px; }
+
+  /* 首页卡片缩小，但保持 3 列布局 */
+  .stats-grid { gap: 12px; margin-bottom: 12px; }
+  .stat-box { padding: 12px 16px; border-radius: 12px; }
+  .stat-title { font-size: 12px; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; }
+  .stat-sub { display: none; } 
+  
+  /* 中间区域保持左右 1.5:1 结构 */
+  .middle-grid { gap: 12px; margin-bottom: 12px; }
+  .card { padding: 16px; margin-bottom: 12px; border-radius: 12px; }
+  .card-title { font-size: 14px; margin-bottom: 8px; }
+  .bar-bg { margin: 8px 0; height: 6px; }
+  .quick-btn { min-height: 60px; font-size: 13px; padding: 8px; gap: 4px;}
+  .quick-btn svg { width: 20px; height: 20px; }
+
+  /* 底部保持 2:1 结构 */
+  .bottom-grid { gap: 12px; }
+  .bottom-grid .card { min-height: 150px; }
+  
+  /* 列表缩小 */
+  .fund-item { padding: 8px 0; }
+  .fund-icon { width: 28px; height: 28px; margin-right: 8px; font-size: 11px; border-radius: 8px;}
+  .fund-name { font-size: 13px; }
+  .fund-time { font-size: 10px; }
+  .fund-amt { font-size: 14px; }
+  .fund-del { opacity: 1; padding: 4px 8px; font-size: 11px;} 
+  
+  .cd-card { padding: 10px; }
+  .cd-title { font-size: 13px; }
+  .cd-days { font-size: 14px; }
+
+  /* 资金页保持 3 列布局 */
+  .funds-summary { gap: 12px; margin-bottom: 12px; }
+  .fund-stat { padding: 12px 16px; border-radius: 12px;}
+  .fund-stat-title { font-size: 12px; margin-bottom: 4px; }
+  .fund-stat-val { font-size: 20px; }
+  
+  .funds-action-grid { gap: 12px; margin-bottom: 12px; }
+  .big-add-card { min-height: 80px; flex-direction: row; gap: 8px; border-radius: 12px;}
+  .big-add-card svg { margin-bottom: 0; width: 20px; height: 20px; }
+  .big-add-card span { font-size: 14px; }
+
+  /* 图表高度变矮 */
+  .chart-box { height: 150px; margin-bottom: 12px; padding-bottom: 12px; }
+  .chart-bar { width: 24px; }
+  .chart-val { font-size: 11px; top: -18px; }
+  .chart-name { font-size: 11px; margin-top: 6px; }
+
+  /* 弹窗适配 */
+  .modal-bg { padding: 10px; }
+  .modal-box { padding: 20px; max-width: 340px; }
+  .modal-title { font-size: 16px; margin-bottom: 12px; }
+  .modal-input { height: 40px; margin-bottom: 10px; font-size: 14px; }
+  .type-switch { margin-bottom: 10px; padding: 2px; }
+  .type-opt { padding: 8px 0; font-size: 14px; }
+  .btn-cancel, .btn-save { height: 40px; font-size: 14px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= 主应用 ================= -->
+<div id="appPage">
+
+  <!-- 左侧导航 -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">聚神阁</div>
+    <nav class="nav-list" id="navDesktop">
+      <div class="nav-item active" data-page="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <span>首页</span>
+      </div>
+      <div class="nav-item" data-page="stats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        <span>统计</span>
+      </div>
+      <div class="nav-item" data-page="funds">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+        <span>资金</span>
+      </div>
+      <div class="nav-item" data-page="accounts">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        <span>账户</span>
+      </div>
+      <!-- 新增：借贷 -->
+      <div class="nav-item" data-page="loans">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>借贷</span>
+      </div>
+      <!-- 新增：目标 -->
+      <div class="nav-item" data-page="goals">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <span>目标</span>
+      </div>
+      <div class="nav-item" data-page="report">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        <span>报表</span>
+      </div>
+      <div class="nav-item" data-page="data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <span>数据</span>
+      </div>
+      <div class="nav-item" data-page="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>设置</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- 右侧主容器 -->
+  <main class="main-wrapper">
+    <!-- 顶部通栏：加入全屏按钮和关闭按钮 -->
+    <header class="top-header">
+      <button class="btn-icon" onclick="toggleFullScreen()" title="切换全屏">⛶</button>
+      <button class="btn-icon" onclick="window.close()" title="关闭软件">✕</button>
+    </header>
+
+    <div class="content-area">
+
+      <!-- 首页 -->
+      <div class="page active" data-page="home">
+        <div class="stats-grid">
+          <div class="stat-box clickable" onclick="openDeposit()">
+            <div class="stat-title">总存款 (点击修改)</div>
+            <div class="stat-value blue" id="homeUiTotal">¥0</div>
+            <div class="stat-sub">所有账户与现金总和</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-title">本月结余</div>
+            <div class="stat-value green" id="homeUiMonthIn">¥0</div>
+            <div class="stat-sub">本月总收入 - 总支出</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-title">今日支出</div>
+            <div class="stat-value red" id="homeUiTodayOut">¥0</div>
+            <div class="stat-sub">今天已花销的金额</div>
+          </div>
+        </div>
+
+        <div class="middle-grid">
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-title">本月预算执行</div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+              <div style="font-size:20px; font-weight:800;" id="homeBudgetText">未设置</div>
+            </div>
+            <div class="bar-bg"><div class="bar-in" id="homeBudgetBar" style="width:0%"></div></div>
+          </div>
+          <div class="card" style="margin-bottom: 0; padding: 16px;">
+            <div class="quick-actions">
+              <button class="quick-btn" onclick="openRecord()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                记一笔
+              </button>
+              <button class="quick-btn" onclick="document.querySelector('[data-page=stats]').click()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                看统计
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-grid">
+          <div class="card">
+            <div class="card-title">最近流水</div>
+            <div id="homeRecentList"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">重要倒数日</div>
+            <div id="homeCountdowns"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 统计 -->
+      <div class="page" data-page="stats">
+        <div class="card">
+          <div class="tabs" id="statsTabs">
+            <div class="tab-btn active" data-p="today">今日</div>
+            <div class="tab-btn" data-p="week">本周</div>
+            <div class="tab-btn" data-p="month">本月</div>
+            <div class="tab-btn" data-p="year">本年</div>
+          </div>
+          <div class="chart-box" id="statsChart"></div>
+          <div id="statsList"></div>
+        </div>
+      </div>
+
+      <!-- 资金 -->
+      <div class="page" data-page="funds">
+        <div class="funds-summary">
+          <div class="fund-stat clickable" onclick="openDeposit()">
+            <div class="fund-stat-title">总存款 (点击修改)</div>
+            <div class="fund-stat-val blue" id="uiTotal">¥0</div>
+          </div>
+          <div class="fund-stat">
+            <div class="fund-stat-title">今日收入</div>
+            <div class="fund-stat-val green" id="uiTodayIn">¥0</div>
+          </div>
+          <div class="fund-stat">
+            <div class="fund-stat-title">今日支出</div>
+            <div class="fund-stat-val red" id="uiTodayOut">¥0</div>
+          </div>
+        </div>
+
+        <div class="funds-action-grid">
+          <div class="card" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center;">
+            <div class="card-title" style="margin-bottom: 8px;">本月预算执行</div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 6px;">
+              <div style="font-size:20px; font-weight:800;" id="fundBudgetText">未设置</div>
+            </div>
+            <div class="bar-bg" style="margin: 0;"><div class="bar-in" id="fundBudgetBar" style="width:0%"></div></div>
+          </div>
+          <div class="big-add-card" onclick="openRecord()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>记一笔</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="fund-list-header">
+            <div class="fund-list-title">全部资金明细</div>
+            <div class="fund-count" id="fundCountText">共 0 笔</div>
+          </div>
+          <div id="fundList"></div>
+        </div>
+      </div>
+
+      <!-- 账户 -->
+      <div class="page" data-page="accounts">
+        <div class="card">
+          <div class="card-title">我的账户</div>
+          <div class="account-item">
+            <div class="account-info">
+              <div class="account-icon">💰</div>
+              <div>
+                <div class="account-name">现金钱包</div>
+                <div class="account-type">日常零钱</div>
+              </div>
+            </div>
+            <div class="account-balance">¥ 0.00</div>
+          </div>
+          <div class="account-item">
+            <div class="account-info">
+              <div class="account-icon">🏦</div>
+              <div>
+                <div class="account-name">储蓄卡</div>
+                <div class="account-type">主要存款</div>
+              </div>
+            </div>
+            <div class="account-balance">¥ 0.00</div>
+          </div>
+          <div class="account-item">
+            <div class="account-info">
+              <div class="account-icon">📱</div>
+              <div>
+                <div class="account-name">支付宝 / 微信</div>
+                <div class="account-type">线上支付</div>
+              </div>
+            </div>
+            <div class="account-balance">¥ 0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 借贷 (新增) -->
+      <div class="page" data-page="loans">
+        <div class="card">
+          <div class="card-title">借贷账本</div>
+          <div class="account-item">
+            <div class="account-info">
+              <div class="account-icon" style="color:var(--green);">↙</div>
+              <div>
+                <div class="account-name">张三</div>
+                <div class="account-type">2026-12-31 归还</div>
+              </div>
+            </div>
+            <div class="account-balance" style="color:var(--green);">借出 ¥ 500.00</div>
+          </div>
+          <div class="account-item">
+            <div class="account-info">
+              <div class="account-icon" style="color:var(--red);">↗</div>
+              <div>
+                <div class="account-name">李四</div>
+                <div class="account-type">本月需还款</div>
+              </div>
+            </div>
+            <div class="account-balance" style="color:var(--red);">借入 ¥ 200.00</div>
+          </div>
+          <div class="empty-tip">暂无更多借贷记录</div>
+        </div>
+      </div>
+
+      <!-- 目标 (新增) -->
+      <div class="page" data-page="goals">
+        <div class="card">
+          <div class="card-title">存钱目标</div>
+          <div class="account-item">
+            <div class="account-info">
+              <div class="account-icon">🎯</div>
+              <div>
+                <div class="account-name">买新手机</div>
+                <div class="account-type">目标：¥ 8000</div>
+              </div>
+            </div>
+            <div class="account-balance" style="color:var(--main);">已存 60%</div>
+          </div>
+          <div class="bar-bg" style="margin: 0;"><div class="bar-in" style="width:60%;"></div></div>
+          <div style="height: 20px;"></div>
+          <div class="account-item" style="margin-top: 20px;">
+            <div class="account-info">
+              <div class="account-icon">🏖️</div>
+              <div>
+                <div class="account-name">旅游基金</div>
+                <div class="account-type">目标：¥ 5000</div>
+              </div>
+            </div>
+            <div class="account-balance" style="color:var(--main);">已存 30%</div>
+          </div>
+          <div class="bar-bg" style="margin: 0;"><div class="bar-in" style="width:30%;"></div></div>
+        </div>
+      </div>
+
+      <!-- 报表 -->
+      <div class="page" data-page="report">
+        <div class="card">
+          <div class="card-title">数据报表生成</div>
+          <div class="report-row">
+            <div>选择年份</div>
+            <select id="reportYear" class="report-select"></select>
+          </div>
+          <div class="report-row">
+            <div>选择月份</div>
+            <select id="reportMonth" class="report-select">
+              <option value="">全年</option>
+              <option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option>
+              <option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option>
+              <option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option>
+              <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
+            </select>
+          </div>
+          <button class="btn-primary" onclick="generateReport()">导出为 Word 文档</button>
+        </div>
+      </div>
+
+      <!-- 数据 -->
+      <div class="page" data-page="data">
+        <div class="card">
+          <div class="card-title">本地数据管理</div>
+          <div class="set-row">
+            <div><div class="set-info">导出备份</div><div class="set-desc">将当前所有财务数据保存为 JSON 文件</div></div>
+            <button class="set-btn" onclick="exportData()">导出</button>
+          </div>
+          <div class="set-row">
+            <div><div class="set-info">导入数据</div><div class="set-desc">从备份文件恢复数据（覆盖当前所有内容）</div></div>
+            <button class="set-btn" onclick="document.getElementById('importFile').click()">导入</button>
+          </div>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+        </div>
+      </div>
+
+      <!-- 设置 -->
+      <div class="page" data-page="settings">
+        <div class="card">
+          <div class="card-title">通用设置</div>
+          <div class="set-row">
+            <div><div class="set-info">应用版本</div><div class="set-desc">聚神阁 v1.0.0 本地版</div></div>
+          </div>
+          <div class="set-row">
+            <div><div class="set-info">数据存储</div><div class="set-desc">数据保存在本地浏览器中，请定期导出备份</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="color: var(--red);">危险操作</div>
+          <div class="set-row">
+            <div><div class="set-info" style="color: var(--red);">清空所有数据</div><div class="set-desc">将永久删除所有资金流水、预算、倒数日等数据，无法恢复</div></div>
+            <button class="set-btn btn-danger" onclick="clearAllData()">清空</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ================= 弹窗区域 ================= -->
+<div class="modal-bg" id="modalDeposit">
+  <div class="modal-box">
+    <div class="modal-title">修改总存款</div>
+    <input type="number" id="inputDeposit" class="modal-input" placeholder="请输入金额">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modalDeposit')">取消</button>
+      <button class="btn-save" onclick="saveDeposit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalRecord">
+  <div class="modal-box">
+    <div class="modal-title">记一笔</div>
+    <div class="type-switch" id="recordTypeBox">
+      <div class="type-opt active" data-type="in">收入</div>
+      <div class="type-opt" data-type="out">支出</div>
+    </div>
+    <input type="text" id="recordRemark" class="modal-input" placeholder="备注 (如: 工资、买菜)">
+    <input type="number" id="recordAmount" class="modal-input" placeholder="金额 (元)">
+    <input type="datetime-local" id="recordTime" class="modal-input">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modalRecord')">取消</button>
+      <button class="btn-save" onclick="saveRecord()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalCD">
+  <div class="modal-box">
+    <div class="modal-title">设置倒数日</div>
+    <input type="text" id="cdInputTitle" class="modal-input" placeholder="事件标题 (如: 发工资)">
+    <input type="date" id="cdInputDate" class="modal-input">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modalCD')">取消</button>
+      <button class="btn-save" onclick="saveCD()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================= 基础配置 =================
+const $ = id => document.getElementById(id);
+const DEFAULT_BUDGET = 3000; 
+
+let DATA = { base: 0, records: [], logs: [], budget: DEFAULT_BUDGET, countdowns: [] };
+let currentStatsPeriod = 'today';
+let currentCDIndex = -1;
+
+const defaultCD = [
+  { id: 1, title: '项目结项', date: '2025-12-31' },
+  { id: 2, title: '年终总结', date: '2025-12-31' }
+];
+
+const pad = n => n < 10 ? '0' + n : n;
+function isToday(t) {
+  const d = new Date(t.replace(/-/g,'/')), n = new Date();
+  return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+}
+function toast(msg) {
+  const el = $('toast'); el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ================= 一键全屏功能 =================
+function toggleFullScreen() {
+  if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+    // 进入全屏
+    const docEl = document.documentElement;
+    if (docEl.requestFullscreen) {
+      docEl.requestFullscreen().catch(err => toast('设备不支持全屏'));
+    } else if (docEl.webkitRequestFullscreen) {
+      docEl.webkitRequestFullscreen();
+    } else if (docEl.mozRequestFullScreen) {
+      docEl.mozRequestFullScreen();
+    } else if (docEl.msRequestFullscreen) {
+      docEl.msRequestFullscreen();
+    } else {
+      toast('您的浏览器不支持全屏');
+    }
+  } else {
+    // 退出全屏
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }
+}
+
+// ================= 数据存取 =================
+function save() { localStorage.setItem('jsg_final_v3', JSON.stringify({ d: DATA })); }
+function load() {
+  const raw = localStorage.getItem('jsg_final_v3');
+  if (raw) {
+    try {
+      const p = JSON.parse(raw);
+      if (p.d) DATA = Object.assign(DATA, p.d);
+      if (!DATA.countdowns || DATA.countdowns.length === 0) DATA.countdowns = defaultCD;
+      if (DATA.budget === undefined) DATA.budget = DEFAULT_BUDGET;
+    } catch(e){}
+  } else {
+    DATA.countdowns = defaultCD;
+    DATA.budget = DEFAULT_BUDGET;
+  }
+}
+
+function getTotal() {
+  let t = DATA.base;
+  DATA.records.forEach(r => t += (r.type === 'in' ? Number(r.amt) : -Number(r.amt)));
+  return Math.round(t * 100) / 100;
+}
+
+function getStats(p) {
+  let curIn = 0, curOut = 0, prevIn = 0, prevOut = 0;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const dayMs = 86400000;
+  let curStart = today, curEnd = today + dayMs - 1;
+  let prevStart = today - dayMs, prevEnd = today - 1;
+
+  if (p === 'week') {
+    const day = now.getDay() || 7;
+    curStart = today - (day - 1) * dayMs; curEnd = curStart + 7 * dayMs - 1;
+    prevStart = curStart - 7 * dayMs; prevEnd = curStart - 1;
+  } else if (p === 'month') {
+    curStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    curEnd = new Date(now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59).getTime();
+    prevStart = new Date(now.getFullYear(), now.getMonth()-1, 1).getTime();
+    prevEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).getTime();
+  } else if (p === 'year') {
+    curStart = new Date(now.getFullYear(), 0, 1).getTime();
+    curEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59).getTime();
+    prevStart = new Date(now.getFullYear()-1, 0, 1).getTime();
+    prevEnd = new Date(now.getFullYear()-1, 11, 31, 23, 59, 59).getTime();
+  }
+
+  DATA.records.forEach(r => {
+    const t = new Date(r.time.replace(/-/g,'/')).getTime();
+    if (t >= curStart && t <= curEnd) {
+      if (r.type === 'in') curIn += Number(r.amt); else curOut += Number(r.amt);
+    } else if (t >= prevStart && t <= prevEnd) {
+      if (r.type === 'in') prevIn += Number(r.amt); else prevOut += Number(r.amt);
+    }
+  });
+  return { curIn, curOut, prevIn, prevOut };
+}
+
+function fmtMoney(v) { return '¥' + Number(v).toLocaleString('zh-CN', {maximumFractionDigits: 2}); }
+
+// ================= 渲染 =================
+function renderAll() {
+  const total = getTotal();
+  $('uiTotal').textContent = fmtMoney(total);
+  $('homeUiTotal').textContent = fmtMoney(total);
+
+  const tIn = DATA.records.filter(r => r.type === 'in' && isToday(r.time)).reduce((s,r)=>s+Number(r.amt),0);
+  const tOut = DATA.records.filter(r => r.type === 'out' && isToday(r.time)).reduce((s,r)=>s+Number(r.amt),0);
+  $('uiTodayIn').textContent = fmtMoney(tIn);
+  $('uiTodayOut').textContent = fmtMoney(tOut);
+  $('homeUiTodayOut').textContent = fmtMoney(tOut);
+
+  const mStats = getStats('month');
+  const mBalance = mStats.curIn - mStats.curOut;
+  $('homeUiMonthIn').textContent = fmtMoney(mBalance);
+  $('homeUiMonthIn').className = `stat-value ${mBalance >= 0 ? 'green' : 'red'}`;
+
+  const listHtml = (r, i, showDel) => `
+    <div class="fund-item">
+      <div class="fund-icon ${r.type}">${r.type==='in'?'收':'支'}</div>
+      <div class="fund-info">
+        <div class="fund-name">${r.remark}</div>
+        <div class="fund-time">${r.time}</div>
+      </div>
+      <div class="fund-amt ${r.type}">${r.type==='in'?'+':'-'} ${fmtMoney(r.amt)}</div>
+      ${showDel ? `<button class="fund-del" onclick="delRecord(${i})">删</button>` : ''}
+    </div>
+  `;
+
+  $('fundCountText').textContent = `共 ${DATA.records.length} 笔`;
+  $('fundList').innerHTML = DATA.records.length ? DATA.records.map((r,i) => listHtml(r, i, true)).join('') : '<div class="empty-tip">暂无记录，点击上方按钮记一笔</div>';
+  
+  const recent = DATA.records.slice(0, 5);
+  $('homeRecentList').innerHTML = recent.length ? recent.map(r => listHtml(r, null, false)).join('') : '<div class="empty-tip">暂无最近流水</div>';
+
+  if (DATA.budget) {
+    const pct = Math.min(100, Math.round((mStats.curOut/DATA.budget)*100));
+    $('homeBudgetText').textContent = fmtMoney(mStats.curOut) + ' / ' + fmtMoney(DATA.budget);
+    $('homeBudgetBar').style.width = pct + '%';
+    $('homeBudgetBar').style.background = pct > 90 ? 'var(--red)' : 'var(--text)';
+    
+    $('fundBudgetText').textContent = fmtMoney(mStats.curOut) + ' / ' + fmtMoney(DATA.budget);
+    $('fundBudgetBar').style.width = pct + '%';
+    $('fundBudgetBar').style.background = pct > 90 ? 'var(--red)' : 'var(--text)';
+  } else {
+    $('homeBudgetText').textContent = '未设置预算';
+    $('homeBudgetBar').style.width = '0%';
+    $('fundBudgetText').textContent = '未设置预算';
+    $('fundBudgetBar').style.width = '0%';
+  }
+
+  $('homeCountdowns').innerHTML = DATA.countdowns.map((c, idx) => {
+    const target = new Date(c.date.replace(/-/g, '/'));
+    const diff = Math.ceil((target - new Date()) / (1000 * 60 * 60 * 24));
+    const daysText = diff >= 0 ? `还剩 ${diff} 天` : `已过期 ${Math.abs(diff)} 天`;
+    return `
+    <div class="cd-card" data-idx="${idx}">
+      <div class="cd-info">
+        <div class="cd-title">${c.title}</div>
+        <div class="cd-date">${c.date}</div>
+      </div>
+      <div class="cd-days ${diff < 0 ? 'expired' : ''}">${daysText}</div>
+    </div>`;
+  }).join('');
+
+  document.querySelectorAll('.cd-card').forEach(card => {
+    card.onclick = function() {
+      const idx = parseInt(this.dataset.idx, 10);
+      const c = DATA.countdowns[idx];
+      currentCDIndex = idx;
+      $('cdInputTitle').value = c.title;
+      $('cdInputDate').value = c.date;
+      openModal('modalCD');
+    };
+  });
+
+  renderStats();
+}
+
+function renderStats() {
+  const s = getStats(currentStatsPeriod);
+  const max = Math.max(s.curIn, s.curOut, s.prevIn, s.prevOut, 1);
+  $('statsChart').innerHTML = `
+    <div class="chart-col"><div class="chart-bar prev" style="height:${Math.max(4,(s.prevOut/max)*100)}%"><span class="chart-val">${s.prevOut}</span></div><div class="chart-name">上期支出</div></div>
+    <div class="chart-col"><div class="chart-bar" style="height:${Math.max(4,(s.curOut/max)*100)}%"><span class="chart-val">${s.curOut}</span></div><div class="chart-name">本期支出</div></div>
+    <div class="chart-col"><div class="chart-bar prev" style="height:${Math.max(4,(s.prevIn/max)*100)}%"><span class="chart-val">${s.prevIn}</span></div><div class="chart-name">上期收入</div></div>
+    <div class="chart-col"><div class="chart-bar" style="height:${Math.max(4,(s.curIn/max)*100)}%"><span class="chart-val">${s.curIn}</span></div><div class="chart-name">本期收入</div></div>
+  `;
+  const diffOut = s.curOut - s.prevOut;
+  const diffIn = s.curIn - s.prevIn;
+  $('statsList').innerHTML = `
+    <div class="stat-row">
+      <div>支出对比</div><div class="stat-val">${fmtMoney(s.curOut)}</div>
+      <div class="stat-diff ${diffOut>0?'down':(diffOut<0?'up':'')}">${diffOut>0?'↑':(diffOut<0?'↓':'—')} ${fmtMoney(Math.abs(diffOut))}</div>
+    </div>
+    <div class="stat-row">
+      <div>收入对比</div><div class="stat-val">${fmtMoney(s.curIn)}</div>
+      <div class="stat-diff ${diffIn>0?'up':(diffIn<0?'down':'')}">${diffIn>0?'↑':(diffIn<0?'↓':'—')} ${fmtMoney(Math.abs(diffIn))}</div>
+    </div>
+  `;
+}
+
+// ================= 交互 =================
+document.querySelectorAll('[data-page]').forEach(el => {
+  el.onclick = () => {
+    const p = el.dataset.page;
+    document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector(`.page[data-page="${p}"]`).classList.add('active');
+    document.querySelectorAll(`.nav-item[data-page="${p}"]`).forEach(n => n.classList.add('active'));
+  };
+});
+
+document.querySelectorAll('#statsTabs .tab-btn').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('#statsTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+    t.classList.add('active');
+    currentStatsPeriod = t.dataset.p;
+    renderStats();
+  };
+});
+
+document.querySelectorAll('#recordTypeBox .type-opt').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('#recordTypeBox .type-opt').forEach(b=>b.classList.remove('active'));
+    t.classList.add('active');
+  };
+});
+
+function openModal(id) { $(id).classList.add('show'); }
+function closeModal(id) { $(id).classList.remove('show'); }
+
+window.openRecord = () => {
+  $('recordRemark').value = ''; $('recordAmount').value = '';
+  const n = new Date();
+  $('recordTime').value = n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate())+'T'+pad(n.getHours())+':'+pad(n.getMinutes());
+  document.querySelectorAll('#recordTypeBox .type-opt').forEach(d => d.classList.toggle('active', d.dataset.type === 'in'));
+  openModal('modalRecord');
+};
+
+window.saveRecord = () => {
+  const type = document.querySelector('#recordTypeBox .type-opt.active').dataset.type;
+  const remark = $('recordRemark').value.trim();
+  const amt = parseFloat($('recordAmount').value);
+  const time = $('recordTime').value.replace('T',' ') + ':00';
+  if (!remark || !amt) return toast('请填写完整');
+  
+  DATA.records.unshift({ type, remark, amt, time });
+  save(); renderAll(); closeModal('modalRecord'); toast('记录成功');
+};
+
+window.delRecord = i => {
+  if (!confirm('确定要删除这条记录吗？')) return;
+  DATA.records.splice(i,1); save(); renderAll();
+};
+
+window.openDeposit = () => { $('inputDeposit').value = getTotal(); openModal('modalDeposit'); };
+window.saveDeposit = () => {
+  const v = parseFloat($('inputDeposit').value);
+  if (isNaN(v)) return;
+  let sum = 0; DATA.records.forEach(r => sum += (r.type==='in'?Number(r.amt):-Number(r.amt)));
+  DATA.base = v - sum;
+  save(); renderAll(); closeModal('modalDeposit');
+};
+
+window.saveCD = () => {
+  const title = $('cdInputTitle').value.trim();
+  const date = $('cdInputDate').value;
+  if (!title || !date) return toast('请填写完整');
+  if (currentCDIndex >= 0) {
+    DATA.countdowns[currentCDIndex] = { ...DATA.countdowns[currentCDIndex], title, date };
+    save(); renderAll(); closeModal('modalCD'); toast('倒数日已更新');
+  }
+};
+
+window.clearAllData = () => {
+  if (!confirm('⚠️ 警告：确定要清空所有数据吗？此操作不可恢复！')) return;
+  localStorage.removeItem('jsg_final_v3');
+  DATA = { base: 0, records: [], logs: [], budget: DEFAULT_BUDGET, countdowns: defaultCD };
+  save(); renderAll(); toast('所有数据已清空');
+};
+
+window.exportData = () => {
+  const blob = new Blob([JSON.stringify({ d: DATA }, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '聚神阁备份.json'; a.click();
+  toast('数据已导出');
+};
+
+window.importData = function(e) {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = evt => {
+    try {
+      const p = JSON.parse(evt.target.result);
+      if (!Array.isArray(p.d.records)) throw new Error('格式错误');
+      if (!confirm('导入将覆盖当前数据，确定吗？')) return;
+      DATA = p.d || DATA;
+      save(); renderAll(); toast('导入成功');
+    } catch(err) { toast('文件格式错误'); }
+  };
+  r.readAsText(f); e.target.value = '';
+};
+
+function initYears() {
+  const now = new Date().getFullYear();
+  for(let i = now; i >= now - 5; i--) $('reportYear').innerHTML += `<option value="${i}">${i} 年</option>`;
+}
+
+window.generateReport = () => {
+  const y = parseInt($('reportYear').value);
+  const m = $('reportMonth').value ? parseInt($('reportMonth').value) : null;
+  const records = DATA.records.filter(r => {
+    const d = new Date(r.time.replace(/-/g,'/'));
+    return d.getFullYear() === y && (!m || d.getMonth() + 1 === m);
+  });
+  if (!records.length) return toast('该时间段暂无数据');
+  let inc = 0, exp = 0;
+  records.forEach(r => r.type === 'in' ? inc += Number(r.amt) : exp += Number(r.amt));
+  const html = `
+    <html><head><meta charset="utf-8"><title>聚神阁报表</title></head><body>
+    <h1>聚神阁 ${y} 年 ${m?m+' 月':'全年'} 报表</h1>
+    <p>总收入：¥${inc} | 总支出：¥${exp} | 净结余：¥${inc-exp}</p>
+    <table border="1" cellspacing="0" cellpadding="8" style="width:100%;border-collapse:collapse;text-align:left;">
+      <tr style="background:#f0f0f0"><th>时间</th><th>类型</th><th>备注</th><th>金额</th></tr>
+      ${records.map(r => `<tr><td>${r.time}</td><td>${r.type==='in'?'收入':'支出'}</td><td>${r.remark}</td><td>${r.type==='in'?'+':'-'}¥${r.amt}</td></tr>`).join('')}
+    </table></body></html>
+  `;
+  const blob = new Blob([html], {type:'application/msword'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `报表_${y}${m?'_'+m:''}.doc`; a.click();
+  toast('报表生成成功');
+};
+
+// 启动
+load(); initYears(); renderAll();
+</script>
+</body>
+</html>
