@@ -1,0 +1,698 @@
+完全理解。你的新需求是将所有账户的余额全部计入总资产（取消“冻结”概念），同时让“设置”按钮永远固定在右上角。
+
+这次的改动：
+
+1. 取消冻结：无论账户是否绑定了目标，它的余额都会计入总览页的“当前总资产”。
+2. 设置悬浮固定：右上角的齿轮按钮使用绝对定位，无论是在电脑端还是手机端，都固定在屏幕右上角，随页面滚动。
+3. 精简布局：为了确保移动端不被底部的安全区或浏览器工具栏挡住，底部导航栏优化为原生无缝隙贴合。
+
+请直接复制以下完整代码：
+
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>聚神阁 - 极简资产中枢</title>
+
+<style>
+/* ================= 基础与主题 ================= */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg: #f8f9fa; --card: #ffffff; --text: #1a1a1a; --text-light: #666666;
+  --main: #2563eb; --main-light: #eff6ff; --green: #059669; --red: #dc2626;
+  --line: #e5e7eb; --radius: 16px; --shadow: 0 4px 20px rgba(0,0,0,0.03); --input-bg: #f3f4f6;
+}
+body.dark {
+  --bg: #000000; --card: #121212; --text: #ffffff; --text-light: #a3a3a3;
+  --main: #3b82f6; --main-light: rgba(59, 130, 246, 0.15); --green: #10b981; --red: #ef4444;
+  --line: #262626; --shadow: 0 4px 20px rgba(0,0,0,0.8); --input-bg: #1a1a1a;
+}
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg); color: var(--text); height: 100vh; height: 100dvh;
+  overflow: hidden; display: flex; flex-direction: row; -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+button { font-family: inherit; border: none; outline: none; cursor: pointer; transition: 0.2s; background: transparent; color: inherit; }
+button:active { transform: scale(0.96); }
+input, select { font-family: inherit; outline: none; border: none; width: 100%; background: transparent; color: inherit; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+/* ================= 侧边栏 (桌面端) ================= */
+.sidebar {
+  width: 220px; flex-shrink: 0; background: var(--card); border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; transition: background 0.3s; z-index: 150;
+}
+.sidebar-logo {
+  height: 64px; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 900; color: var(--main); letter-spacing: 3px; border-bottom: 1px solid var(--line);
+}
+.nav-list { padding: 16px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.nav-item {
+  padding: 14px 20px; border-radius: 12px; color: var(--text-light); 
+  font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { background: var(--main-light); color: var(--main); }
+
+/* ================= 主框架 ================= */
+.main-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+
+/* 悬浮固定的设置按钮 (全端通用) */
+.global-settings-btn {
+  position: absolute; top: 20px; right: 20px; z-index: 500;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.global-settings-btn:hover { background: var(--main-light); color: var(--main); }
+
+.content-area { flex: 1; overflow-y: auto; padding: 32px; }
+.page { display: none; max-width: 900px; margin: 0 auto; width: 100%; animation: fadeIn 0.3s; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
+
+/* ================= 通用卡片 ================= */
+.card { background: var(--card); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid var(--line); }
+.card-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+.empty-tip { text-align: center; padding: 30px 0; font-size: 15px; color: var(--text-light); }
+
+/* ================= 首页概览 ================= */
+.hero-assets { position: relative; text-align: center; padding: 40px 0 30px; }
+.hero-assets-title { font-size: 15px; color: var(--text-light); font-weight: 700; margin-bottom: 10px; letter-spacing: 1px; }
+.hero-assets-val { font-size: 54px; font-weight: 900; color: var(--main); letter-spacing: -2px; line-height: 1; }
+
+.home-viz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.viz-card { 
+  display: flex; flex-direction: column; align-items: center; justify-content: center; 
+  background: var(--card); border-radius: var(--radius); padding: 24px 20px; 
+  border: 1px solid var(--line); box-shadow: var(--shadow); 
+}
+/* 科技感细线圆环 */
+.pie-chart { 
+  width: 130px; height: 130px; border-radius: 50%; position: relative; margin: 10px 0 20px; 
+  background: conic-gradient(var(--main) 0%, var(--line) 0%);
+  display: flex; align-items: center; justify-content: center;
+}
+.pie-chart::after { 
+  content: ""; position: absolute; inset: 8px; 
+  background: var(--card); border-radius: 50%; 
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 1;
+}
+.pie-inner-text { position: relative; z-index: 2; text-align: center; }
+.pie-inner-text strong { font-size: 24px; font-weight: 900; color: var(--text); line-height: 1.2;}
+.pie-inner-text span { font-size: 12px; color: var(--text-light); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px;}
+
+/* ================= 账户 / 借贷 / 目标 列表 ================= */
+.account-item { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--line); }
+.account-item:last-child { border: none; }
+.account-info { display: flex; align-items: center; gap: 16px; }
+.account-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; background: var(--main-light); color: var(--main);}
+.account-name { font-size: 16px; font-weight: 800; }
+.account-type { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+.account-balance { font-size: 20px; font-weight: 900; }
+
+.loan-scroll-box { max-height: 480px; overflow-y: auto; padding-right: 12px; }
+
+/* ================= 表单 & 弹窗 ================= */
+.form-group { width: 100%; margin-bottom: 20px; text-align: left; }
+.form-group label { display: block; font-size: 14px; color: var(--text-light); margin-bottom: 8px; font-weight: 700; }
+.form-group input, .form-group select { width: 100%; height: 50px; background: var(--input-bg); border-radius: 10px; padding: 0 16px; font-size: 15px; border: 1px solid var(--line); transition: 0.2s; color: var(--text); font-weight: 600; }
+.form-group input:focus, .form-group select:focus { border-color: var(--main); background: var(--card); box-shadow: 0 0 0 3px var(--main-light); }
+.form-group input[readonly] { background: var(--bg); color: var(--text-light); cursor: not-allowed; border-color: transparent; }
+
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px;}
+.modal-bg.show { display: flex; animation: fadeIn 0.2s;}
+.modal-box { width: 100%; max-width: 420px; background: var(--card); border-radius: 20px; padding: 32px; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; max-height: 90vh; overflow-y: auto; }
+.modal-title { font-size: 22px; font-weight: 900; margin-bottom: 24px; }
+.modal-btns { width: 100%; display: flex; gap: 12px; margin-top: 12px; }
+.btn-cancel { flex: 1; height: 50px; border-radius: 12px; background: var(--bg); color: var(--text-light); font-size: 15px; font-weight: 700; border: 1px solid var(--line);}
+.btn-save { flex: 1; height: 50px; border-radius: 12px; background: var(--main); color: #fff; font-size: 15px; font-weight: 700; }
+
+.type-switch { width: 100%; display: flex; background: var(--input-bg); border-radius: 10px; padding: 4px; margin-bottom: 20px; }
+.type-opt { flex: 1; text-align: center; padding: 10px 0; font-size: 15px; color: var(--text-light); border-radius: 8px; cursor: pointer; font-weight: 700; }
+.type-opt.active { background: var(--card); color: var(--main); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+.set-row { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid var(--line); }
+.set-row:last-child { border: none; }
+.set-info { font-size: 16px; font-weight: 700; }
+.set-desc { font-size: 14px; color: var(--text-light); margin-top: 6px; }
+.set-btn { background: var(--main-light); color: var(--main); padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 700; }
+.btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--red); }
+.theme-switch { display: flex; gap: 10px; }
+.theme-btn { padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 700; background: var(--bg); color: var(--text-light); border: 2px solid transparent; }
+.theme-btn.active { background: var(--main); color: #fff; }
+.toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); color: #fff; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 700; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 3000; }
+.toast.show { opacity: 1; }
+
+/* ================= 手机/平板 响应式适配 ================= */
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+  
+  /* 底部导航栏：贴底、均分 */
+  .sidebar {
+    position: fixed; 
+    bottom: 0; 
+    left: 0; 
+    right: 0;
+    width: 100%;
+    height: calc(60px + env(safe-area-inset-bottom));
+    flex-direction: row; 
+    border-right: none; 
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom); 
+    background: var(--card);
+    z-index: 2000;
+  }
+  .sidebar-logo { display: none; } 
+  .nav-list { 
+    flex-direction: row; width: 100%; padding: 0; margin: 0;
+    display: flex; justify-content: space-between;
+  }
+  
+  /* 微信级导航标签 */
+  .nav-item { 
+    flex: 1; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+    font-size: 11px; 
+    font-weight: 500; 
+    gap: 2px; 
+    padding: 0; 
+    border-radius: 0;
+    height: 100%;
+  }
+  .nav-item span { font-size: 20px; line-height: 1; display: block; }
+  .nav-item.active { background: transparent; color: var(--main); font-weight: 700; }
+  
+  /* 顶栏隐藏，全局设置按钮位置微调 */
+  .top-header { display: none; }
+  .global-settings-btn { top: 15px; right: 15px; width: 36px; height: 36px; font-size: 18px; }
+
+  /* 内容区留出底部导航的空间 */
+  .content-area { 
+    padding: 20px; 
+    padding-bottom: calc(80px + env(safe-area-inset-bottom)); 
+  }
+  
+  .hero-assets { padding: 30px 0 20px; }
+  .hero-assets-val { font-size: 46px; }
+  
+  /* 首页图表单列紧凑显示 */
+  .home-viz-grid { grid-template-columns: 1fr; gap: 16px; }
+  .viz-card { padding: 20px; flex-direction: row; justify-content: flex-start; gap: 20px; }
+  
+  .pie-chart { width: 90px; height: 90px; margin: 0; flex-shrink: 0; }
+  .pie-chart::after { inset: 6px; }
+  .pie-inner-text strong { font-size: 18px; }
+  .pie-inner-text span { font-size: 11px; max-width: 60px;}
+
+  .card { padding: 20px; }
+  .modal-box { border-radius: 24px 24px 0 0; position: absolute; bottom: 0; max-height: 85vh; }
+  .modal-bg { align-items: flex-end; padding: 0; }
+}
+</style>
+</head>
+<body>
+
+<div id="appPage" style="display:flex; width:100%; height:100%;">
+
+  <!-- 左侧导航 (手机端自动变底部导航) -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">聚神阁</div>
+    <nav class="nav-list">
+      <div class="nav-item active" data-page="home"><span>📊</span> 总览</div>
+      <div class="nav-item" data-page="accounts"><span>💳</span> 账户</div>
+      <div class="nav-item" data-page="loans"><span>🤝</span> 借贷</div>
+      <div class="nav-item" data-page="goals"><span>🎯</span> 目标</div>
+    </nav>
+  </aside>
+
+  <!-- 右侧主容器 -->
+  <main class="main-wrapper">
+    
+    <!-- 全局固定的设置按钮 -->
+    <button class="global-settings-btn" onclick="document.querySelector('[data-page=settings]').click()">⚙️</button>
+
+    <div class="content-area">
+
+      <!-- 首页总览 -->
+      <div class="page active" data-page="home">
+        <div class="hero-assets">
+          <div class="hero-assets-title">当前总资产</div>
+          <div class="hero-assets-val" id="uiTotal">¥0.00</div>
+        </div>
+
+        <!-- 动态渲染目标卡片 -->
+        <div class="home-viz-grid" id="homeVizGrid"></div>
+      </div>
+
+      <!-- 账户 -->
+      <div class="page" data-page="accounts">
+        <div class="card">
+          <div class="card-title">
+            我的账户
+            <button class="set-btn" onclick="openAddAccount()">+ 添加</button>
+          </div>
+          <div id="accountList"></div>
+        </div>
+      </div>
+
+      <!-- 借贷 -->
+      <div class="page" data-page="loans">
+        <div class="card">
+          <div class="card-title">
+            借贷追踪
+            <button class="set-btn" onclick="openAddLoan()">+ 记借贷</button>
+          </div>
+          <div class="loan-scroll-box" id="loanList"></div>
+        </div>
+      </div>
+
+      <!-- 目标 -->
+      <div class="page" data-page="goals">
+        <div class="card">
+          <div class="card-title">
+            存钱目标
+            <button class="set-btn" onclick="openAddGoal()">+ 添加</button>
+          </div>
+          <div id="goalList"></div>
+        </div>
+      </div>
+
+      <!-- 设置 -->
+      <div class="page" data-page="settings">
+        <div class="card">
+          <div class="card-title">外观与数据</div>
+          <div class="set-row">
+            <div><div class="set-info">主题模式</div></div>
+            <div class="theme-switch">
+              <button class="theme-btn active" id="themeLight" onclick="setTheme('light')">☀️ 浅色</button>
+              <button class="theme-btn" id="themeDark" onclick="setTheme('dark')">🌙 深色</button>
+            </div>
+          </div>
+          <div class="set-row">
+            <div><div class="set-info">本地备份</div><div class="set-desc">导出为 JSON 格式防丢失</div></div>
+            <button class="set-btn" onclick="exportData()">导出</button>
+          </div>
+          <div class="set-row">
+            <div><div class="set-info">清空数据</div><div class="set-desc">永久删除所有资产与记录</div></div>
+            <button class="set-btn btn-danger" onclick="clearAllData()">清空</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ================= 弹窗区域 ================= -->
+
+<!-- 账户 -->
+<div class="modal-bg" id="modalAccount">
+  <div class="modal-box">
+    <div class="modal-title" id="accModalTitle">添加账户</div>
+    <input type="hidden" id="accId">
+    <div class="form-group">
+      <label>账户名称 *</label>
+      <input type="text" id="accName" placeholder="如：工商银行卡">
+    </div>
+    <div class="form-group">
+      <label>余额 (元) *</label>
+      <input type="number" id="accBalance" placeholder="0.00" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>账户注释</label>
+      <input type="text" id="accNote" readonly>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modalAccount')">取消</button>
+      <button class="btn-save" onclick="saveAccount()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 借贷 -->
+<div class="modal-bg" id="modalLoan">
+  <div class="modal-box">
+    <div class="modal-title">添加借贷</div>
+    <div class="type-switch" id="loanTypeBox">
+      <div class="type-opt active" data-type="out">我借出</div>
+      <div class="type-opt" data-type="in">我借入</div>
+    </div>
+    <div class="form-group">
+      <label>对方姓名 *</label>
+      <input type="text" id="loanPerson" placeholder="对方姓名">
+    </div>
+    <div class="form-group">
+      <label>选择资金账户 *</label>
+      <select id="loanAccount"></select>
+    </div>
+    <div class="form-group">
+      <label>金额 *</label>
+      <input type="number" id="loanAmount" placeholder="0.00" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>还款日期 *</label>
+      <input type="date" id="loanDate">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modalLoan')">取消</button>
+      <button class="btn-save" onclick="saveLoan()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 还款确认 -->
+<div class="modal-bg" id="modalEditLoan">
+  <div class="modal-box">
+    <div class="modal-title">还款确认</div>
+    <input type="hidden" id="editLoanId">
+    <div class="form-group">
+      <label>对方姓名</label>
+      <input type="text" id="editLoanPerson" readonly>
+    </div>
+    <p style="color:var(--red); font-size:14px; margin-bottom:20px; font-weight:600;">确认结清后，该记录将被永久删除。</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modalEditLoan')">取消</button>
+      <button class="btn-save" onclick="confirmRepay()">确认还款</button>
+    </div>
+  </div>
+</div>
+
+<!-- 目标 -->
+<div class="modal-bg" id="modalGoal">
+  <div class="modal-box">
+    <div class="modal-title">添加存钱目标</div>
+    <div class="form-group">
+      <label>计划名称 *</label>
+      <input type="text" id="goalName" placeholder="如：旅游基金">
+    </div>
+    <div class="form-group">
+      <label>目标金额 *</label>
+      <input type="number" id="goalTarget" placeholder="0.00" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>绑定资金账户 *</label>
+      <select id="goalAccount"></select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modalGoal')">取消</button>
+      <button class="btn-save" onclick="saveGoal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================= 基础配置 =================
+const $ = id => document.getElementById(id);
+let DATA = { accounts: [], loans: [], goals: [], theme: 'light' };
+
+const genId = () => Date.now().toString() + Math.floor(Math.random() * 1000);
+function toast(msg) {
+  const el = $('toast'); el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ================= 主题 & 数据存取 =================
+window.setTheme = function(theme) {
+  DATA.theme = theme;
+  document.body.classList.toggle('dark', theme === 'dark');
+  $('themeLight').classList.toggle('active', theme === 'light');
+  $('themeDark').classList.toggle('active', theme === 'dark');
+  save();
+};
+function save() { localStorage.setItem('jsg_minimal_v7', JSON.stringify({ d: DATA })); }
+function load() {
+  const raw = localStorage.getItem('jsg_minimal_v7'); 
+  if (raw) {
+    try {
+      const p = JSON.parse(raw);
+      if (p.d) DATA = Object.assign(DATA, p.d);
+      if (!DATA.theme) DATA.theme = 'light';
+    } catch(e){}
+  }
+  document.body.classList.toggle('dark', DATA.theme === 'dark');
+  $('themeLight').classList.toggle('active', DATA.theme === 'light');
+  $('themeDark').classList.toggle('active', DATA.theme === 'dark');
+}
+
+// 核心改变：计算所有的钱，不再排除绑定的账户
+function getTotalAssets() {
+  let t = 0;
+  DATA.accounts.forEach(acc => { t += Number(acc.balance); });
+  return Math.round(t * 100) / 100;
+}
+
+function openModal(id) { $(id).classList.add('show'); }
+function closeModal(id) { $(id).classList.remove('show'); }
+
+// ================= 账户模块 =================
+window.openAddAccount = () => {
+  $('accModalTitle').textContent = '添加账户';
+  $('accId').value = ''; $('accName').value = ''; $('accBalance').value = ''; $('accNote').value = '可用账户'; 
+  $('accName').removeAttribute('readonly'); openModal('modalAccount');
+};
+window.openEditAccount = (id) => {
+  const acc = DATA.accounts.find(a => a.id === id);
+  if (!acc) return;
+  $('accModalTitle').textContent = '编辑余额';
+  $('accId').value = acc.id; $('accName').value = acc.name; $('accBalance').value = acc.balance; $('accNote').value = acc.note;
+  $('accName').setAttribute('readonly', true); openModal('modalAccount');
+};
+window.saveAccount = () => {
+  const id = $('accId').value, name = $('accName').value.trim(), balance = parseFloat($('accBalance').value);
+  if (isNaN(balance)) return toast('请输入正确余额');
+  if (id) {
+    const acc = DATA.accounts.find(a => a.id === id);
+    if (acc) acc.balance = balance;
+  } else {
+    if (!name) return toast('请输入账户名称');
+    DATA.accounts.push({ id: genId(), name: name, balance: balance, note: '可用账户' });
+  }
+  save(); renderAll(); closeModal('modalAccount'); toast('保存成功');
+};
+
+// ================= 借贷模块 =================
+function populateSelect(selectId) {
+  const select = $(selectId); select.innerHTML = '<option value="">请选择账户</option>';
+  DATA.accounts.forEach(acc => {
+    const opt = document.createElement('option');
+    opt.value = acc.id; opt.textContent = `${acc.name} (¥${acc.balance.toFixed(2)})`;
+    select.appendChild(opt);
+  });
+}
+document.querySelectorAll('#loanTypeBox .type-opt').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('#loanTypeBox .type-opt').forEach(b=>b.classList.remove('active'));
+    t.classList.add('active');
+  };
+});
+window.openAddLoan = () => {
+  if (DATA.accounts.length === 0) return toast('请先添加账户');
+  $('loanPerson').value = ''; $('loanAmount').value = ''; $('loanDate').value = '';
+  document.querySelectorAll('#loanTypeBox .type-opt').forEach(d => d.classList.toggle('active', d.dataset.type === 'out'));
+  populateSelect('loanAccount'); openModal('modalLoan');
+};
+window.saveLoan = () => {
+  const type = document.querySelector('#loanTypeBox .type-opt.active').dataset.type;
+  const person = $('loanPerson').value.trim(), accId = $('loanAccount').value;
+  const amt = parseFloat($('loanAmount').value), date = $('loanDate').value;
+  if (!person || !accId || isNaN(amt) || !date) return toast('请填写所有必填项');
+  const acc = DATA.accounts.find(a => a.id === accId);
+  if (type === 'out') acc.balance = Math.round((Number(acc.balance) - amt) * 100) / 100;
+  else acc.balance = Math.round((Number(acc.balance) + amt) * 100) / 100;
+  DATA.loans.unshift({ id: genId(), type, person, accId, amount: amt, date });
+  save(); renderAll(); closeModal('modalLoan'); toast('已记录');
+};
+window.openEditLoan = (id) => {
+  const loan = DATA.loans.find(l => l.id === id);
+  if (!loan) return;
+  $('editLoanId').value = loan.id;
+  $('editLoanPerson').value = `${loan.person} (${loan.type==='out'?'借出':'借入'})`;
+  openModal('modalEditLoan');
+};
+window.confirmRepay = () => {
+  const id = $('editLoanId').value;
+  const loanIndex = DATA.loans.findIndex(l => l.id === id);
+  if (loanIndex === -1) return;
+  const loan = DATA.loans[loanIndex];
+  
+  const acc = DATA.accounts.find(a => a.id === loan.accId);
+  if (acc) {
+    if (loan.type === 'out') acc.balance = Math.round((Number(acc.balance) + Number(loan.amount)) * 100) / 100;
+    else acc.balance = Math.round((Number(acc.balance) - Number(loan.amount)) * 100) / 100;
+  }
+  DATA.loans.splice(loanIndex, 1);
+  save(); renderAll(); closeModal('modalEditLoan'); toast('已结清并删除');
+};
+
+// ================= 目标模块 =================
+window.openAddGoal = () => {
+  if (DATA.accounts.length === 0) return toast('请先添加账户');
+  $('goalName').value = ''; $('goalTarget').value = '';
+  populateSelect('goalAccount'); openModal('modalGoal');
+};
+window.saveGoal = () => {
+  const name = $('goalName').value.trim(), target = parseFloat($('goalTarget').value), accId = $('goalAccount').value;
+  if (!name || isNaN(target) || !accId) return toast('请填写完整信息');
+  const acc = DATA.accounts.find(a => a.id === accId);
+  if (!acc) return toast('账户不存在');
+  DATA.goals.push({ id: genId(), name, target, accId });
+  acc.note = name; // 保留备注联动，但不影响总资产计算
+  save(); renderAll(); closeModal('modalGoal'); toast('目标已创建');
+};
+window.delGoal = (id) => {
+  if (!confirm('删除目标将解锁对应账户，确定吗？')) return;
+  const goal = DATA.goals.find(g => g.id === id);
+  if (goal) {
+    const acc = DATA.accounts.find(a => a.id === goal.accId);
+    if (acc) acc.note = '可用账户'; 
+    DATA.goals = DATA.goals.filter(g => g.id !== id);
+    save(); renderAll(); toast('已删除');
+  }
+};
+
+// ================= 渲染模块 =================
+function renderAll() {
+  // 显示所有的钱
+  $('uiTotal').textContent = '¥' + getTotalAssets().toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  // 账户列表
+  $('accountList').innerHTML = DATA.accounts.map(a => `
+    <div class="account-item">
+      <div class="account-info" onclick="openEditAccount('${a.id}')" style="cursor:pointer; flex:1;">
+        <div class="account-icon">💳</div>
+        <div>
+          <div class="account-name">${a.name}</div>
+          <div class="account-type">${a.note}</div>
+        </div>
+      </div>
+      <div style="text-align:right; display:flex; flex-direction:column; align-items:flex-end;">
+        <div class="account-balance">¥ ${Number(a.balance).toFixed(2)}</div>
+        <div style="font-size:13px; color:var(--main); cursor:pointer; margin-top:4px;" onclick="openEditAccount('${a.id}')">编辑余额</div>
+      </div>
+    </div>
+  `).join('') || '<div class="empty-tip">暂无账户</div>';
+
+  // 借贷列表
+  if (DATA.loans.length === 0) {
+    $('loanList').innerHTML = '<div class="empty-tip">暂无借贷记录</div>';
+  } else {
+    $('loanList').innerHTML = DATA.loans.map(l => {
+      const acc = DATA.accounts.find(a => a.id === l.accId);
+      let overdueHtml = '';
+      const dueDate = new Date(l.date.replace(/-/g,'/')).getTime();
+      const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime();
+      const diffDays = Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24));
+      if (diffDays > 0) overdueHtml = `<span style="color:var(--red); font-size:13px; margin-left:12px; font-weight:700;">拖欠 ${diffDays} 天</span>`;
+
+      return `
+        <div class="account-item">
+          <div class="account-info">
+            <div class="account-icon" style="color:${l.type==='out'?'var(--green)':'var(--red)'}; width:40px; height:40px;">${l.type==='out'?'↗':'↙'}</div>
+            <div>
+              <div class="account-name" style="font-size:16px;">${l.person} <span style="font-size:13px; color:var(--text-light); font-weight:500;">(${l.type==='out'?'借出':'借入'})</span>${overdueHtml}</div>
+              <div class="account-type" style="font-size:12px;">还款日: ${l.date} | 关联: ${acc ? acc.name : '未知'}</div>
+            </div>
+          </div>
+          <div style="text-align:right; display:flex; align-items:center; gap:16px;">
+            <div class="account-balance" style="font-size:18px; color:${l.type==='out'?'var(--green)':'var(--red)'};">¥ ${Number(l.amount).toFixed(2)}</div>
+            <button class="set-btn" onclick="openEditLoan('${l.id}')">还款</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // 目标列表
+  $('goalList').innerHTML = DATA.goals.length ? DATA.goals.map(g => {
+    const acc = DATA.accounts.find(a => a.id === g.accId);
+    const current = acc ? Number(acc.balance) : 0, pct = Math.min(100, Math.round((current / g.target) * 100)) || 0;
+    return `
+      <div class="account-item" style="flex-direction:column; align-items:stretch; padding-bottom:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div class="account-info">
+            <div class="account-icon">🎯</div>
+            <div>
+              <div class="account-name" style="font-size:16px;">${g.name}</div>
+              <div class="account-type" style="font-size:12px;">目标: ¥ ${g.target.toFixed(2)} | 绑定: ${acc ? acc.name : '已删除'}</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div class="account-balance" style="color:var(--main); font-size:18px;">已存 ¥ ${current.toFixed(2)}</div>
+            <div style="font-size:12px; color:var(--red); cursor:pointer; margin-top:4px;" onclick="delGoal('${g.id}')">删除</div>
+          </div>
+        </div>
+        <div style="height:8px; background:var(--bg); border-radius:4px; overflow:hidden; border:1px solid var(--line);">
+          <div style="height:100%; width:${pct}%; background:var(--main);"></div>
+        </div>
+      </div>
+    `;
+  }).join('') : '<div class="empty-tip">暂无存钱目标</div>';
+
+  // 首页图表动态渲染
+  const homeGrid = $('homeVizGrid');
+  if (DATA.goals.length === 0) {
+    homeGrid.innerHTML = '<div class="empty-tip">还没有设定存钱目标，去目标页面创建一个吧。</div>';
+  } else {
+    homeGrid.innerHTML = DATA.goals.map(g => {
+      const acc = DATA.accounts.find(a => a.id === g.accId);
+      const current = acc ? Number(acc.balance) : 0;
+      const target = Number(g.target);
+      const pct = Math.min(100, Math.round((current / target) * 100)) || 0;
+      
+      return `
+        <div class="viz-card">
+          <div class="pie-chart" style="background: conic-gradient(var(--main) ${pct}%, var(--line) ${pct}%);">
+            <div class="pie-inner-text">
+              <strong>${pct}%</strong>
+              <span>${g.name}</span>
+            </div>
+          </div>
+          <div style="flex:1;">
+             <div style="font-size:14px; font-weight:800; margin-bottom:4px;">${g.name}</div>
+             <div style="font-size:13px; color:var(--text-light);">已存 ¥${current.toFixed(0)} / 目标 ¥${target.toFixed(0)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+// 导航切换
+document.querySelectorAll('[data-page]').forEach(el => {
+  el.onclick = () => {
+    const p = el.dataset.page;
+    document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector(`.page[data-page="${p}"]`).classList.add('active');
+    document.querySelectorAll(`.nav-item[data-page="${p}"]`).forEach(n => n.classList.add('active'));
+  };
+});
+
+window.clearAllData = () => {
+  if (!confirm('⚠️ 确定要清空所有数据吗？')) return;
+  localStorage.removeItem('jsg_minimal_v7'); 
+  DATA = { accounts: [], loans: [], goals: [], theme: 'light' };
+  save(); renderAll(); toast('已清空');
+};
+
+window.exportData = () => {
+  const blob = new Blob([JSON.stringify({ d: DATA }, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '聚神阁资产备份.json'; a.click(); toast('已导出');
+};
+
+// 启动
+load(); renderAll();
+</script>
+</body>
+</html>
+```
